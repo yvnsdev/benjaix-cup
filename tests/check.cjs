@@ -1,0 +1,21 @@
+const fs=require('node:fs');
+const vm=require('node:vm');
+const assert=require('node:assert/strict');
+const source=fs.readFileSync('dist/app.js','utf8').replace(/init\(\);\s*$/,'');
+const stub={addEventListener(){},querySelector(){return {}},querySelectorAll(){return []}};
+const context=vm.createContext({console,structuredClone,crypto:require('node:crypto').webcrypto,localStorage:{getItem(){return null}},document:stub,window:stub,location:{hash:''},Intl,setTimeout,clearTimeout});
+vm.runInContext(source,context);
+function run(code){return vm.runInContext(code,context);}
+assert.equal(run("esc('<img onerror=\"bad\">')"),'&lt;img onerror=&quot;bad&quot;&gt;');
+assert.equal(run('standings().reduce((s,t)=>s+t.pj,0)'),16);
+assert.equal(run('standings().reduce((s,t)=>s+t.gf,0)'),run('standings().reduce((s,t)=>s+t.gc,0)'));
+run("data.matches=[{home_id:'t0',away_id:'t1',status:'live',home_score:5,away_score:0}]");
+assert.equal(run('standings()[0].pts'),0,'Live games must not change official points');
+run("data.matches[0].status='finished'");
+assert.equal(run('standings()[0].pts'),3);
+assert.equal(run('standings()[0].id'),'t0');
+run('data.matches[0].away_score=5');
+assert.equal(run("standings().find(t=>t.id==='t0').pts"),1);
+assert.equal(run("standings().find(t=>t.id==='t1').pts"),1);
+for(const fn of ['home()','matches()','teamsView()','stats()','table()','panel()'])assert.ok(run(fn).length>100,fn);
+console.log('PASS: escaping, standings, draws, live exclusion, public views and login rendering.');
