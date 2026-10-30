@@ -8,7 +8,7 @@ Ejecuta **solo** `supabase/002_accounts_and_cups.sql` en SQL Editor. Conserva eq
 
 Si el proyecto todavía no tiene tablas, ejecuta primero `supabase/schema.sql` y luego `supabase/002_accounts_and_cups.sql`.
 
-Para las estadísticas y votaciones, ejecuta después `supabase/003_stats_and_expert.sql` y `supabase/004_live_expert.sql` una vez, en ese orden. Luego ejecuta `supabase/005_player_profiles_without_accounts.sql` para que los jugadores normales no necesiten cuenta. La cuarta migración cambia las votaciones a funcionamiento automático durante el partido y conserva los votos históricos. En un proyecto vacío instala las cinco migraciones en orden.
+Para las estadísticas y votaciones, ejecuta después `supabase/003_stats_and_expert.sql` y `supabase/004_live_expert.sql` una vez, en ese orden. Luego ejecuta `supabase/005_player_profiles_without_accounts.sql` y `supabase/006_fix_match_insert_policy.sql` para que los jugadores normales no necesiten cuenta y la política de partidos quede actualizada. La cuarta migración cambia las votaciones a funcionamiento automático durante el partido y conserva los votos históricos. En un proyecto vacío instala las seis migraciones en orden.
 
 ## Estadísticas y Jugador Experto BCup
 
@@ -33,6 +33,13 @@ Para las estadísticas y votaciones, ejecuta después `supabase/003_stats_and_ex
 ```sql
 update public.profiles set role='admin' where id='UUID-DE-LA-CUENTA-ADMIN';
 ```
+
+Si al crear un partido aparece un error de política RLS, la sesión actual no tiene
+`role='admin'` en `public.profiles`. Usa el UUID de esa cuenta en el `UPDATE`
+anterior y vuelve a iniciar sesión; la política de partidos permite insertar solo
+a administradores y solo en la competencia cuyo `format` es `league`. Después de
+actualizar instalaciones existentes, ejecuta también
+`supabase/006_fix_match_insert_policy.sql`.
 
 La URL y clave pública ya están en `dist/config.js`. Nunca colocar claves secret/service_role en el frontend. La clave pública no permite instalar migraciones ni configurar Auth/SMTP; esas tareas requieren acceso al dashboard.
 
