@@ -8,16 +8,17 @@ Ejecuta **solo** `supabase/002_accounts_and_cups.sql` en SQL Editor. Conserva eq
 
 Si el proyecto todavía no tiene tablas, ejecuta primero `supabase/schema.sql` y luego `supabase/002_accounts_and_cups.sql`.
 
-Para las nuevas estadísticas y votaciones, ejecuta después `supabase/003_stats_and_expert.sql` una vez. No elimina los datos existentes. Instalar las tres migraciones en orden en un proyecto vacío.
+Para las estadísticas y votaciones, ejecuta después `supabase/003_stats_and_expert.sql` y `supabase/004_live_expert.sql` una vez, en ese orden. La cuarta migración cambia las votaciones a funcionamiento automático durante el partido y conserva los votos históricos. En un proyecto vacío instala las cuatro migraciones en orden.
 
 ## Estadísticas y Jugador Experto BCup
 
 - El administrador registra goles, asistencias, amarillas y rojas en Marcadores y eventos. Una asistencia se registra como evento independiente y se debe cargar una sola vez por pase de gol; no se infiere del marcador.
 - Estadísticas ofrece rankings por goles, asistencias, goles + asistencias, amarillas y rojas; filtros por equipo y competencia. Por defecto incluye partidos finalizados; se pueden incluir los partidos en vivo como datos provisionales. Goles del marcador y goles de eventos pueden diferir si faltan eventos por cargar.
-- Después de finalizar un partido, el administrador selecciona entre 2 y 32 candidatos de sus dos equipos y abre la votación. Debe elegir jugadores que hayan participado, incluidos suplentes si corresponde. La selección se congela tras la apertura.
+- La votación está **dentro del detalle del partido** y se abre automáticamente al marcarlo En vivo. Los candidatos son los jugadores de sus alineaciones y los jugadores que aparecen en eventos del encuentro, siempre de sus dos equipos. No se incluyen suplentes sin participación registrada ni todo el plantel. Si faltan alineaciones y eventos, se indica que aún no hay jugadores disponibles para votar.
 - Cualquier visitante con acceso al sitio puede consultar los candidatos y conteos. Para votar necesita una cuenta con correo confirmado: no hace falta pertenecer a un equipo. Hay **un voto por cuenta y partido**, validado en la base de datos, y se puede cambiar mientras esté abierta. Esta regla no impide que una persona cree varias cuentas; no se presenta como protección absoluta contra fraude.
-- Solo la administración cierra/reabre la votación. Reabrir conserva los votos y candidatos. Si el partido deja de estar finalizado, la votación queda pausada y no se proclama ganador hasta volver a finalizarlo.
-- Al cerrar, gana quien tenga más votos. Los empates comparten el premio; cero votos no proclama ganador. Los premios alimentan el ranking de Experto BCup, independiente de las estadísticas deportivas.
+- Al marcar el partido Finalizado, se cierra automáticamente la votación y se publica al más votado. Los empates comparten premio; cero votos no proclama ganador. Si se devuelve a Programado se pausa; si vuelve a En vivo se reabre, conservando los votos. El servidor valida el estado del partido y la participación al emitir cada voto.
+- La sección **Experto BCup del menú es una vitrina**, no una lista de votaciones abiertas: muestra los 12 partidos premiados más recientes, ordenados por fecha de cierre, con jugador, equipo, porcentaje, votos, marcador y enlace al partido. Debajo aparece el ranking acumulado de premios. Los líderes de partidos en vivo todavía no aparecen como ganadores.
+- Las votaciones finalizadas de la versión anterior conservan sus candidatos y resultados como historial. Las votaciones nuevas y las que vuelven a estar en vivo usan participación registrada. Si se corrigen alineaciones/eventos, los candidatos automáticos sin participación dejan de aparecer; su voto almacenado no cuenta en los resultados visibles mientras no sean elegibles.
 - Las identidades y elecciones individuales no son públicas. Cada cuenta puede leer solo su voto; los conteos públicos se actualizan con triggers y Realtime. Inserciones directas y cambios de conteos están bloqueados; se vota únicamente mediante la función validada.
 - La demo incluye votos de ejemplo claramente identificados y permite probar la interacción sin cuenta. No envía votos reales ni simula usuarios reales en Supabase.
 
@@ -46,6 +47,8 @@ La URL y clave pública ya están en `dist/config.js`. Nunca colocar claves secr
 - Para quitar un jugador usa Quitar. Los jugadores con eventos se conservan por su historial; si están en alineaciones, hay que retirarlos de ellas primero.
 
 ## Liga y copas
+
+- En el inicio, **La carrera por la copa** muestra solo los cruces de la primera fase que aún tenga partidos sin finalizar: cuartos, semifinales o final. No salta de fase por terminar un solo cruce. Al completar la copa muestra la final y el campeón. Si hay varias copas, se puede elegir; la tabla de liga aparece separada debajo.
 
 - **Liga:** tabla calculada solo con partidos de liga finalizados. Victoria 3 puntos, empate 1. Desempates por diferencia de gol y goles a favor; nombre para presentar un orden provisional en igualdad total.
 - **Copa:** el administrador selecciona 4, 8 o 16 equipos. El orden mostrado define los cruces iniciales. Cada ronda se programa 7 días después de la anterior; fecha y cancha se editan desde Marcadores y eventos.
