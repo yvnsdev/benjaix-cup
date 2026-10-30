@@ -31,18 +31,14 @@ create function public.create_my_team(team_name text, abbreviation text, team_co
  return tid;
 end $$;
 
-create function public.add_team_player(target_team uuid, account_email text, player_name text, shirt_number integer, player_position text) returns uuid language plpgsql security definer set search_path=public as $$ declare account_id uuid; pid uuid; begin
+create function public.add_team_player(target_team uuid, player_name text, shirt_number integer, player_position text) returns uuid language plpgsql security definer set search_path=public as $$ declare pid uuid; begin
  if not (public.is_admin() or public.owns_team(target_team)) then raise exception 'No tienes permisos sobre este equipo'; end if;
- select id into account_id from auth.users where lower(email)=lower(trim(account_email)) and email_confirmed_at is not null;
- if account_id is null then raise exception 'La cuenta debe registrarse y confirmar su correo antes de incorporarse'; end if;
- if exists(select 1 from public.teams where id=target_team and captain_id=account_id) then raise exception 'Esta cuenta ya es capitán del equipo'; end if;
  insert into public.players(team_id,name,number,position) values(target_team,trim(player_name),shirt_number,player_position) returning id into pid;
- insert into public.team_members(team_id,user_id,player_id) values(target_team,account_id,pid);
  return pid;
 end $$;
 -- Un capitán nunca puede convertir a un jugador en gestor mediante la API.
-revoke all on function public.create_my_team(text,text,text),public.add_team_player(uuid,text,text,integer,text) from public;
-grant execute on function public.create_my_team(text,text,text),public.add_team_player(uuid,text,text,integer,text) to authenticated;
+revoke all on function public.create_my_team(text,text,text),public.add_team_player(uuid,text,integer,text) from public;
+grant execute on function public.create_my_team(text,text,text),public.add_team_player(uuid,text,integer,text) to authenticated;
 
 create table public.competitions(id uuid primary key default gen_random_uuid(), name text not null check(length(name) between 1 and 80), format text not null check(format in ('league','cup')), size integer check(size in (4,8,16)), created_at timestamptz not null default now(), check((format='league' and size is null) or (format='cup' and size is not null)));
 insert into public.competitions(name,format) values('Liga Benjaix 2026','league');

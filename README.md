@@ -8,7 +8,7 @@ Ejecuta **solo** `supabase/002_accounts_and_cups.sql` en SQL Editor. Conserva eq
 
 Si el proyecto todavía no tiene tablas, ejecuta primero `supabase/schema.sql` y luego `supabase/002_accounts_and_cups.sql`.
 
-Para las estadísticas y votaciones, ejecuta después `supabase/003_stats_and_expert.sql` y `supabase/004_live_expert.sql` una vez, en ese orden. La cuarta migración cambia las votaciones a funcionamiento automático durante el partido y conserva los votos históricos. En un proyecto vacío instala las cuatro migraciones en orden.
+Para las estadísticas y votaciones, ejecuta después `supabase/003_stats_and_expert.sql` y `supabase/004_live_expert.sql` una vez, en ese orden. Luego ejecuta `supabase/005_player_profiles_without_accounts.sql` para que los jugadores normales no necesiten cuenta. La cuarta migración cambia las votaciones a funcionamiento automático durante el partido y conserva los votos históricos. En un proyecto vacío instala las cinco migraciones en orden.
 
 ## Estadísticas y Jugador Experto BCup
 
@@ -27,7 +27,7 @@ Para las estadísticas y votaciones, ejecuta después `supabase/003_stats_and_ex
 1. En Supabase → Authentication → Providers → Email, habilita el registro por correo y **Confirm email**.
 2. En Authentication → URL Configuration establece Site URL como `https://benjaix-cup-liga.equipontek.chatgpt.site` y añade `https://benjaix-cup-liga.equipontek.chatgpt.site/` a Redirect URLs. Para desarrollo, añade la URL local correspondiente.
 3. Configura un proveedor SMTP para entregar confirmaciones a usuarios reales. El correo predeterminado de Supabase tiene restricciones de destinatarios y límites; configura y prueba la entrega antes de abrir inscripciones.
-4. Las personas se registran desde la web, reciben el enlace de confirmación e ingresan. Pueden reenviar la confirmación. El perfil sin permisos administrativos se crea automáticamente con un trigger; el navegador no elige roles.
+4. Solo los capitanes y la administración necesitan cuenta. Los jugadores normales son perfiles creados por su capitán con nombre, dorsal y posición; no reciben acceso ni necesitan registrarse. Las cuentas de capitanes reciben un enlace de confirmación y pueden reenviarlo. El perfil sin permisos administrativos se crea automáticamente con un trigger; el navegador no elige roles.
 5. Crea o registra la cuenta administradora y promuévela una vez desde SQL Editor:
 
 ```sql
