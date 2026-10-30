@@ -8,6 +8,19 @@ Ejecuta **solo** `supabase/002_accounts_and_cups.sql` en SQL Editor. Conserva eq
 
 Si el proyecto todavía no tiene tablas, ejecuta primero `supabase/schema.sql` y luego `supabase/002_accounts_and_cups.sql`.
 
+Para las nuevas estadísticas y votaciones, ejecuta después `supabase/003_stats_and_expert.sql` una vez. No elimina los datos existentes. Instalar las tres migraciones en orden en un proyecto vacío.
+
+## Estadísticas y Jugador Experto BCup
+
+- El administrador registra goles, asistencias, amarillas y rojas en Marcadores y eventos. Una asistencia se registra como evento independiente y se debe cargar una sola vez por pase de gol; no se infiere del marcador.
+- Estadísticas ofrece rankings por goles, asistencias, goles + asistencias, amarillas y rojas; filtros por equipo y competencia. Por defecto incluye partidos finalizados; se pueden incluir los partidos en vivo como datos provisionales. Goles del marcador y goles de eventos pueden diferir si faltan eventos por cargar.
+- Después de finalizar un partido, el administrador selecciona entre 2 y 32 candidatos de sus dos equipos y abre la votación. Debe elegir jugadores que hayan participado, incluidos suplentes si corresponde. La selección se congela tras la apertura.
+- Cualquier visitante con acceso al sitio puede consultar los candidatos y conteos. Para votar necesita una cuenta con correo confirmado: no hace falta pertenecer a un equipo. Hay **un voto por cuenta y partido**, validado en la base de datos, y se puede cambiar mientras esté abierta. Esta regla no impide que una persona cree varias cuentas; no se presenta como protección absoluta contra fraude.
+- Solo la administración cierra/reabre la votación. Reabrir conserva los votos y candidatos. Si el partido deja de estar finalizado, la votación queda pausada y no se proclama ganador hasta volver a finalizarlo.
+- Al cerrar, gana quien tenga más votos. Los empates comparten el premio; cero votos no proclama ganador. Los premios alimentan el ranking de Experto BCup, independiente de las estadísticas deportivas.
+- Las identidades y elecciones individuales no son públicas. Cada cuenta puede leer solo su voto; los conteos públicos se actualizan con triggers y Realtime. Inserciones directas y cambios de conteos están bloqueados; se vota únicamente mediante la función validada.
+- La demo incluye votos de ejemplo claramente identificados y permite probar la interacción sin cuenta. No envía votos reales ni simula usuarios reales en Supabase.
+
 ## Registro y confirmación de correo
 
 1. En Supabase → Authentication → Providers → Email, habilita el registro por correo y **Confirm email**.
