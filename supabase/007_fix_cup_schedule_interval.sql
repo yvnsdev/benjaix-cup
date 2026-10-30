@@ -43,6 +43,10 @@ begin
     first_kickoff+make_interval(days => 7*(r-1)),
     cup_venue
    );
+   if r=log(2,n)::integer and i=1 then
+    insert into public.matches(competition_id,home_id,away_id,round,slot,kickoff,venue)
+    values(cid,null,null,r,2,first_kickoff+make_interval(days => 7*(r-1)),cup_venue);
+   end if;
   end loop;
   slots:=slots/2;
   r:=r+1;

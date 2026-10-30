@@ -65,6 +65,10 @@ create function public.create_cup(cup_name text, team_ids uuid[], first_kickoff 
   for i in 1..slots loop
    insert into public.matches(competition_id,home_id,away_id,round,slot,kickoff,venue)
    values(cid,case when r=1 then team_ids[2*i-1] end,case when r=1 then team_ids[2*i] end,r,i,first_kickoff+make_interval(days => 7*(r-1)),cup_venue);
+   if r=log(2,n)::integer and i=1 then
+    insert into public.matches(competition_id,home_id,away_id,round,slot,kickoff,venue)
+    values(cid,null,null,r,2,first_kickoff+make_interval(days => 7*(r-1)),cup_venue);
+   end if;
   end loop;
   slots:=slots/2; r:=r+1;
  end loop;
@@ -82,7 +86,7 @@ create function public.validate_competition_match() returns trigger language plp
  if c.format='league' and (new.home_id is null or new.away_id is null or new.slot is not null) then raise exception 'Partido de liga no válido'; end if;
  if (new.home_id is null or new.away_id is null) and new.status<>'scheduled' then raise exception 'Espera a que se definan ambos equipos'; end if;
  if c.format='cup' and new.status='finished' and public.match_winner(new) is null then raise exception 'Un empate de copa necesita un ganador por penales'; end if;
- if c.format='cup' and (new.slot is null or new.round>log(2,c.size)::integer or new.slot>c.size/power(2,new.round)) then raise exception 'Fase de copa no válida'; end if;
+ if c.format='cup' and (new.slot is null or new.round>log(2,c.size)::integer or (new.slot>c.size/power(2,new.round) and not (new.round=log(2,c.size)::integer and new.slot=2))) then raise exception 'Fase de copa no válida'; end if;
  return new;
 end $$;
 create trigger validate_competition_match before insert or update on public.matches for each row execute function public.validate_competition_match();
@@ -97,6 +101,15 @@ create function public.advance_cup_winner() returns trigger language plpgsql sec
  if exists(select 1 from public.events where match_id=next_match.id) then raise exception 'Retira los eventos de la siguiente fase antes de cambiar el ganador'; end if;
  delete from public.lineups where match_id=next_match.id;
  update public.matches set home_id=case when new.slot%2=1 then w else home_id end,away_id=case when new.slot%2=0 then w else away_id end,home_score=0,away_score=0,minute=0,penalty_home=null,penalty_away=null where id=next_match.id;
+ if new.round=log(2,(select size from public.competitions where id=new.competition_id))::integer-1 then
+  update public.matches
+  set home_id=case when new.slot=1 then case when new.home_id=w then new.away_id else new.home_id end else home_id end,
+      away_id=case when new.slot=2 then case when new.home_id=w then new.away_id else new.home_id end else away_id end,
+      home_score=0,away_score=0,minute=0,penalty_home=null,penalty_away=null
+  where competition_id=new.competition_id
+    and round=new.round+1
+    and slot=2;
+ end if;
  return new;
 end $$;
 create trigger advance_cup_winner after update on public.matches for each row execute function public.advance_cup_winner();

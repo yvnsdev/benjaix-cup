@@ -41,8 +41,10 @@ a administradores y solo en la competencia cuyo `format` es `league`. Después d
 actualizar instalaciones existentes, ejecuta también
 `supabase/006_fix_match_insert_policy.sql`. Si ya aplicaste las migraciones
 anteriores, ejecuta también `supabase/007_fix_cup_schedule_interval.sql` y
-`supabase/008_allow_admin_match_edits.sql` para corregir la programación de
-fases de copa y permitir editar sus partidos desde administración.
+`supabase/008_allow_admin_match_edits.sql` y
+`supabase/009_third_place_match.sql` para corregir la programación de fases,
+permitir editar sus partidos desde administración y añadir el partido por el
+tercer lugar.
 
 La URL y clave pública ya están en `dist/config.js`. Nunca colocar claves secret/service_role en el frontend. La clave pública no permite instalar migraciones ni configurar Auth/SMTP; esas tareas requieren acceso al dashboard.
 

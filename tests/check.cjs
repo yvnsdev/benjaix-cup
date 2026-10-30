@@ -83,8 +83,9 @@ run("const semi=data.matches.find(m=>m.competition_id==='cup-demo'&&m.round===2)
 assert.equal(run('currentCupPhase(demoCup).round'),2,'Do not skip a partially completed round');
 run("data.matches.filter(m=>m.competition_id==='cup-demo'&&m.round===2).forEach(m=>{m.status='finished';m.home_score=2;m.away_score=0;advanceDemo(m.id)})");
 assert.equal(run('currentCupPhase(demoCup).round'),3);
-assert.equal(run('currentCupPhase(demoCup).games.length'),1);
+assert.equal(run('currentCupPhase(demoCup).games.length'),2);
 run("const finalGame=data.matches.find(m=>m.competition_id==='cup-demo'&&m.round===3);finalGame.status='finished';finalGame.home_score=1");
+run("const thirdGame=data.matches.find(m=>m.competition_id==='cup-demo'&&m.round===3&&m.slot===2);thirdGame.status='finished';thirdGame.home_score=1;thirdGame.away_score=0");
 assert.equal(run('currentCupPhase(demoCup).complete'),true);
 assert.ok(run('homeCupSection()').includes('CAMPEÓN'));
 assert.equal(run("matchParticipants('m0').length"),22);
