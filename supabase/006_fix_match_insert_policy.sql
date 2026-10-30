@@ -1,6 +1,12 @@
 -- Deja una única política de inserción para partidos de liga.
 begin;
 
+insert into public.competitions(name, format, size)
+select 'Liga Benjaix 2026', 'league', null
+where not exists (
+ select 1 from public.competitions where format = 'league'
+);
+
 drop policy if exists match_write on public.matches;
 drop policy if exists match_insert on public.matches;
 drop policy if exists match_update on public.matches;

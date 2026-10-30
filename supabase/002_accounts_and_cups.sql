@@ -64,7 +64,7 @@ create function public.create_cup(cup_name text, team_ids uuid[], first_kickoff 
  while slots>=1 loop
   for i in 1..slots loop
    insert into public.matches(competition_id,home_id,away_id,round,slot,kickoff,venue)
-   values(cid,case when r=1 then team_ids[2*i-1] end,case when r=1 then team_ids[2*i] end,r,i,first_kickoff+make_interval(days=7*(r-1)),cup_venue);
+   values(cid,case when r=1 then team_ids[2*i-1] end,case when r=1 then team_ids[2*i] end,r,i,first_kickoff+make_interval(days => 7*(r-1)),cup_venue);
   end loop;
   slots:=slots/2; r:=r+1;
  end loop;

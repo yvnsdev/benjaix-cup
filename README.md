@@ -39,7 +39,10 @@ Si al crear un partido aparece un error de política RLS, la sesión actual no t
 anterior y vuelve a iniciar sesión; la política de partidos permite insertar solo
 a administradores y solo en la competencia cuyo `format` es `league`. Después de
 actualizar instalaciones existentes, ejecuta también
-`supabase/006_fix_match_insert_policy.sql`.
+`supabase/006_fix_match_insert_policy.sql`. Si ya aplicaste las migraciones
+anteriores, ejecuta también `supabase/007_fix_cup_schedule_interval.sql` y
+`supabase/008_allow_admin_match_edits.sql` para corregir la programación de
+fases de copa y permitir editar sus partidos desde administración.
 
 La URL y clave pública ya están en `dist/config.js`. Nunca colocar claves secret/service_role en el frontend. La clave pública no permite instalar migraciones ni configurar Auth/SMTP; esas tareas requieren acceso al dashboard.
 
