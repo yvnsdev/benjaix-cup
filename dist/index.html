@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="enhancements.css"><link rel="stylesheet" href="statistics.css">
 <link rel="stylesheet" href="live.css"></head>
 
-<body>
+<body class="app-loading">
     <aside class="sidebar"><a class="brand" href="#inicio"><span
                 class="brand-icon">B<span><span data-icon="arrow"></span></span></span><span>BENJAIX<span class="brand-sub">CUP / LIGA DE
                     FÚTBOL</span></span></a>
@@ -33,7 +33,7 @@
     <div class="shell">
         <header>
             <div><span class="green"><span data-icon="dot"></span></span> EL FÚTBOL NOS CONECTA</div>
-            <div class="header-right"><span id="connection" class="connection">Modo demo</span><a href="#panel"
+            <div class="header-right"><span id="connection" class="connection">Cargando…</span><a href="#panel"
                     class="button small">Ingresar <span><span data-icon="arrow"></span></span></a></div>
         </header>
         <main id="app" tabindex="-1"></main>
@@ -44,6 +44,9 @@
         <div id="modal-content"></div>
     </dialog>
     <div id="toast" role="status"></div>
+    <style>
+        body.app-loading #app { visibility: hidden; }
+    </style>
     <script src="config.js"></script>
     <script type="module" src="app.js"></script>
 </body>
