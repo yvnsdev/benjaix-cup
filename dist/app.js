@@ -340,14 +340,23 @@ cupsView=function(){const cups=(data.competitions||[]).filter(c=>c.format==='cup
 };
 
 const fallbackCrest=crest;
-crest=function(t,mini=false){const url=t.crest_path&&window.BENJAIX_CONFIG?.supabaseUrl?`${window.BENJAIX_CONFIG.supabaseUrl}/storage/v1/object/public/team-crests/${t.crest_path}`:t.demo_crest;return `<span class="crest-wrap ${mini?'mini':''}">${fallbackCrest(t,mini)}${url?`<img class="crest-image" src="${esc(url)}" alt="Escudo de ${esc(t.name)}" width="80" height="80" loading="lazy" decoding="async">`:''}</span>`;};
-document.addEventListener('error',e=>{if(e.target.matches?.('.crest-image'))e.target.remove();},true);
+crest=function(t,mini=false){const url=t.crest_path&&window.BENJAIX_CONFIG?.supabaseUrl?`${window.BENJAIX_CONFIG.supabaseUrl}/storage/v1/object/public/team-crests/${t.crest_path}`:t.demo_crest;return `<span class="crest-wrap ${mini?'mini':''} ${url?'has-image':''}">${fallbackCrest(t,mini)}${url?`<img class="crest-image" src="${esc(url)}" alt="Escudo de ${esc(t.name)}" width="80" height="80" loading="lazy" decoding="async">`:''}</span>`;};
+document.addEventListener('error',e=>{if(e.target.matches?.('.crest-image')){e.target.closest('.crest-wrap')?.classList.remove('has-image');e.target.remove();}},true);
 async function encodeCrest(file){if(!file||!file.size)throw Error('Selecciona una imagen.');if(file.size>12*1024*1024)throw Error('La imagen original no puede superar 12 MB.');let bitmap;try{bitmap=await createImageBitmap(file);}catch{throw Error('No se pudo abrir esta imagen. Prueba con PNG, JPG, WebP o AVIF.');}try{const canvas=document.createElement('canvas'),scale=Math.min(1,256/Math.max(bitmap.width,bitmap.height));canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);for(const quality of [.85,.7,.5]){const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',quality));if(!blob||blob.type!=='image/webp')throw Error('Este navegador no puede convertir a WebP. Actualízalo para subir el escudo.');if(blob.size<=65536)return blob;}throw Error('No se pudo reducir el escudo a 64 KB. Prueba una imagen más simple.');}finally{bitmap.close();}}
 function crestEditor(){return `<form id="crest-form" data-team-id="${selectedTeam}" class="form-grid crest-editor"><h3>Escudo del equipo</h3><div id="crest-preview">${crest(team(selectedTeam))}</div><label>Imagen del escudo<input type="file" name="crest_file" accept="image/*" required></label><p class="form-help">Conservamos la proporción y la transparencia. Convertimos a WebP, máximo 256 px y 64 KB antes de subir.</p><button>Guardar escudo</button><p id="crest-feedback" role="status"></p></form>`;}
 let crestPreviewUrl=null,crestPreviewVersion=0;
 
 const upgradePanel=enhancePanel;
-enhancePanel=function(){upgradePanel();if(location.hash!=='#panel'||!(demo?demoProfile:profile))return;installMatchBrowser('manage-match');installMatchBrowser('lineup-match');const edit=$('#edit-team');if(edit)edit.insertAdjacentHTML('afterend',crestEditor());if(isAdmin()){const cups=$('.management-section[data-section="cups"]');if(cups)cups.insertAdjacentHTML('afterbegin',`<div class="existing-cups"><h3>Copas existentes</h3>${(data.competitions||[]).filter(c=>c.format==='cup').map(cupEditForm).join('')||'<p class="muted">Aún no hay copas.</p>'}</div>`);const form=$('#cup-form');if(form){const label=document.createElement('label');label.innerHTML='Reglamento de esta copa<textarea name="rules" rows="6" maxlength="20000" placeholder="Bases, duración, sanciones y desempates…"></textarea>';form.querySelector('button').before(label);}}};
+enhancePanel=function(){upgradePanel();if(location.hash!=='#panel'||!(demo?demoProfile:profile))return;installMatchBrowser('manage-match');installMatchBrowser('lineup-match');const edit=$('#edit-team');if(edit)edit.insertAdjacentHTML('afterend',crestEditor());if(isAdmin()){promoteTeamControl();const cups=$('.management-section[data-section="cups"]');if(cups)cups.insertAdjacentHTML('afterbegin',`<div class="existing-cups"><h3>Copas existentes</h3>${(data.competitions||[]).filter(c=>c.format==='cup').map(cupEditForm).join('')||'<p class="muted">Aún no hay copas.</p>'}</div>`);const form=$('#cup-form');if(form){const label=document.createElement('label');label.innerHTML='Reglamento de esta copa<textarea name="rules" rows="6" maxlength="20000" placeholder="Bases, duración, sanciones y desempates…"></textarea>';form.querySelector('button').before(label);}}};
+function promoteTeamControl(){
+ const select=$('#owned-team'),nav=$('.management-nav');if(!select||!nav)return;
+ const control=document.createElement('div');control.className='admin-team-control';
+ const t=team(selectedTeam);
+ control.innerHTML=`<div class="admin-team-identity">${crest(t)}<div><span class="eyebrow">EQUIPO QUE ESTÁS ADMINISTRANDO</span><h2>${esc(t.name)}</h2><p>Plantel, escudo y alineaciones de este equipo.</p></div></div>`;
+ const label=select.closest('label');label.firstChild.textContent='Cambiar equipo';
+ control.append(label);nav.before(control);
+ $('.management-section[data-section="lineups"] .team-context')?.remove();
+}
 
 async function handleUpgradeForm(f,v,fd){
  if(f.id==='lineup-form'){const ids=[...f.querySelectorAll('[data-lineup-slot]')].map(s=>s.value),formation=v.formation;if(!FORMATIONS[formation]||ids.length!==FORMATIONS[formation].size||ids.some(id=>!id)||new Set(ids).size!==ids.length)throw Error('Completa cada posición con un jugador distinto.');const m=data.matches.find(m=>m.id===f.dataset.id);if(m.status!=='scheduled')throw Error('El partido ya comenzó.');if(ids.some(id=>player(id)?.team_id!==selectedTeam))throw Error('Todos los jugadores deben pertenecer al equipo.');const old=data.lineups.find(l=>l.match_id===m.id&&l.team_id===selectedTeam);await save('lineups',{match_id:m.id,team_id:selectedTeam,formation,player_ids:ids,slot_player_ids:ids},old?.id);render();return true;}
@@ -368,4 +377,15 @@ function applyRealtime(payload){const {table,eventType}=payload,rows=data[table]
 function queueRealtime(payload){const allowed=['teams','players','matches','events','lineups','competitions','expert_polls','expert_candidates','expert_totals'];if(!allowed.includes(payload.table))return;if(!applyRealtime(payload))realtimeTables.add(payload.table);realtimeDirty=true;clearTimeout(realtimeTimer);realtimeTimer=setTimeout(flushRealtime,600);}
 async function flushRealtime(){if(realtimeRunning){realtimeTimer=setTimeout(flushRealtime,600);return;}const tables=[...realtimeTables];realtimeTables.clear();realtimeRunning=true;try{if(tables.length)await refresh(tables);else if(realtimeDirty){refreshVisibleData();}}catch{toast('No se pudieron sincronizar los cambios. Recarga para actualizar.');}finally{realtimeDirty=false;realtimeRunning=false;if(realtimeTables.size)realtimeTimer=setTimeout(flushRealtime,600);}}
 
+// Tanzy is the public brand of the community player award. Database table
+// names remain unchanged so historical votes and winners keep working.
+function tanzyExpertBrand(html){return html.replaceAll('BCUP','TANZY').replaceAll('BCup','Tanzy');}
+const bcupExpertPromo=expertPromo;
+expertPromo=function(){return tanzyExpertBrand(bcupExpertPromo());};
+const bcupVotePanel=votePanel;
+votePanel=function(match){return tanzyExpertBrand(bcupVotePanel(match));};
+const bcupExpertAdmin=expertAdmin;
+expertAdmin=function(id){bcupExpertAdmin(id);const section=$('#score-editor .expert-admin:last-child');if(section)section.innerHTML=tanzyExpertBrand(section.innerHTML);};
+const bcupExpertView=expertView;
+expertView=function(){return tanzyExpertBrand(bcupExpertView()).replace(/<div class="expert-emblem">[\s\S]*?<\/div>/,`<figure class="expert-tanzy-media"><img src="assets/jugador-experto-tanzy.webp" width="768" height="512" alt="Tarjeta Jugador Experto Tanzy" loading="eager" decoding="async"><figcaption>Premio presentado por Tanzy</figcaption></figure>`);};
 init();
