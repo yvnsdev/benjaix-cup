@@ -8,3 +8,5 @@ textarea{font:inherit;background:#10182d;color:var(--white);border:1px solid var
 .third-place .bracket-match:before,.third-place .bracket-match:after{display:none}
 .management-section label[hidden]{display:none!important}
 .match-card .match-teams>.team{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;overflow-wrap:anywhere;text-align:center}
+.sidebar .brand-with-logo{justify-content:center;padding:0}.brand-logo{display:block;width:128px;height:128px;object-fit:contain}.brand-with-logo+.season{margin-top:24px}
+@media(max-width:900px){.sidebar .brand-with-logo{flex-shrink:0}.brand-logo{width:64px;height:64px}}
