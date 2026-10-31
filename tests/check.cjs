@@ -101,3 +101,25 @@ assert.equal(run("recentExperts()[0].match.id"),'m0','Newest published winner fi
 assert.throws(()=>run("castDemoVote('m0','p0-14')"),/no está abierta/);
 assert.ok(!run('expertView()').includes('Votar ahora'),'Showcase is not a ballot listing');
 console.log('PASS: current cup phase, partial rounds, champion, live participants, substitute events, automatic close and recent showcase.');
+run('data=structuredClone(initial);prepareDemo()');
+for(const name of run('Object.keys(FORMATIONS)')){
+ const slots=run(`formationSlots('${name}')`);
+ assert.equal(slots.length,run(`FORMATIONS['${name}'].size`));
+ assert.equal(new Set(slots.map(s=>`${s.x},${s.y}`)).size,slots.length);
+ assert.ok(slots.every(s=>s.x>0&&s.x<100&&s.y>0&&s.y<100));
+ assert.deepEqual(slots,run(`formationSlots('${name}')`),'Positions must be deterministic');
+}
+run("statMetric='goal';statCompetition='all';statTeam='all';statLive=false;data.events.push({id:'only-card',match_id:'m1',team_id:'t2',player_id:'p2-14',minute:10,type:'yellow'})");
+assert.ok(run('statisticsView()').includes(run("esc(player('p2-14').name)")),'Players with cards only stay visible when sorting by goals');
+assert.ok(!run('statisticsView()').includes('stat-tabs'));
+assert.equal((run('cupsView()').match(/class="bracket-node"/g)||[]).length,7);
+assert.equal((run('cupsView()').match(/<path d="M /g)||[]).length,6);
+assert.ok(run("eventTimeline(data.matches[0])").includes('away-event'));
+assert.equal(run("applyRealtime({table:'teams',eventType:'UPDATE',new:{id:'t0',name:'Renamed'}})"),true);
+assert.equal(run("team('t0').name"),'Renamed');
+assert.equal(run("applyRealtime({table:'events',eventType:'DELETE',old:{id:'e1'}})"),true);
+assert.equal(run("data.events.some(e=>e.id==='e1')"),false);
+run("applyRealtime({table:'expert_totals',eventType:'UPDATE',new:{match_id:'m0',player_id:'p0-0',votes:17}})");
+assert.equal(run("data.expert_totals.find(r=>r.match_id==='m0'&&r.player_id==='p0-0').votes"),17);
+assert.equal(run("applyRealtime({table:'expert_totals',eventType:'DELETE',old:{match_id:'m0'}})"),false,'Incomplete keys require a bounded table refresh');
+console.log('PASS: all fixed formations, unified statistics including card-only players, bracket edges, split timeline and incremental Realtime updates.');

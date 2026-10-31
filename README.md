@@ -1,5 +1,18 @@
 # Benjaix Cup
 
+## Actualización 010: formaciones, bases y escudos
+
+Después de las migraciones 001–009, ejecutar **una vez** `supabase/010_formations_rules_crests.sql` en SQL Editor. No recrear el esquema. La publicación del frontend no ejecuta SQL ni crea el bucket automáticamente. Esta actualización conserva datos existentes y añade:
+
+- 15 formaciones fijas de fútbol 7 y 11. El capitán asigna un jugador distinto a cada casilla; el orden se guarda en `slot_player_ids` y la cancha respeta esas posiciones. Las alineaciones anteriores se muestran ordenadas por rol y dorsal hasta que se revisen antes del inicio.
+- Edición administrativa del nombre y reglamento de cada copa, y del reglamento de liga desde el menú Reglamento. La creación de copa y sus bases es atómica mediante `create_cup_with_rules`. El tamaño y los participantes de copas existentes mantienen su historial; fecha y cancha se editan por partido.
+- Bucket público `team-crests`: archivos WebP de hasta 64 KiB; escritura y eliminación solo por el capitán propietario o un administrador. El navegador reduce la imagen a 256 px por su lado mayor, mantiene la proporción/transparencia y convierte antes de enviarla. Formatos que el navegador no pueda decodificar se rechazan sin subir el original.
+- URLs de escudo versionadas, caché de un año, carga diferida y eliminación del archivo anterior tras guardar el nuevo. La CDN reduce transferencias repetidas, pero no garantiza egress cero. Los originales no se almacenan. Si falla la limpieza, revisar archivos huérfanos desde Storage.
+- Realtime aplica las filas recibidas en memoria y agrupa el renderizado; solo vuelve a consultar una tabla si el mensaje no contiene su clave. La carga inicial sigue siendo un snapshot público completo, paginado en bloques de 500 para evitar truncamiento. Los buscadores paginan la interfaz en seis encuentros y filtran localmente; no son paginación de servidor.
+- Estadísticas en una tabla ordenable, incluidos jugadores con solo asistencias o tarjetas; eventos separados por equipo y cuadro conectado con el tercer lugar aparte.
+
+Verificación: `node tests/check.cjs` y `python tests/upgrades_browser.py` (Playwright y Edge). La prueba de navegador usa demo y comprueba posiciones persistidas, búsquedas, edición de bases, conexiones, conversión PNG→WebP y tamaños móviles. No verifica permisos contra un Supabase real; después de aplicar SQL, probar carga de escudos con capitán propio, otro capitán, administrador y visitante.
+
 HTML, CSS y JavaScript sin compilación. Frontend en `dist/`; Supabase con RLS, Auth y Realtime.
 
 ## Actualizar una instalación existente
