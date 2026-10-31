@@ -10,3 +10,7 @@
 [1030/154440.109:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Acceso denegado. (0x5)
 [1030/155503.150:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Acceso denegado. (0x5)
 [1030/155600.376:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Acceso denegado. (0x5)
+[1031/010906.779:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Acceso denegado. (0x5)
+[1031/011135.336:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Acceso denegado. (0x5)
+[1031/011539.253:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Acceso denegado. (0x5)
+[1031/011855.845:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Acceso denegado. (0x5)

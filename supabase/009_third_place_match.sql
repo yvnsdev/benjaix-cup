@@ -112,4 +112,51 @@ begin
 end
 $$;
 
+do $$
+declare
+ c record;
+ semifinal_one public.matches;
+ semifinal_two public.matches;
+ loser_one uuid;
+ loser_two uuid;
+begin
+ for c in
+  select id, size
+  from public.competitions
+  where format='cup'
+ loop
+  select * into semifinal_one
+  from public.matches
+  where competition_id=c.id
+    and round=log(2,c.size)::integer-1
+    and slot=1;
+
+  select * into semifinal_two
+  from public.matches
+  where competition_id=c.id
+    and round=log(2,c.size)::integer-1
+    and slot=2;
+
+  loser_one:=case
+   when public.match_winner(semifinal_one)=semifinal_one.home_id then semifinal_one.away_id
+   when public.match_winner(semifinal_one)=semifinal_one.away_id then semifinal_one.home_id
+  end;
+  loser_two:=case
+   when public.match_winner(semifinal_two)=semifinal_two.home_id then semifinal_two.away_id
+   when public.match_winner(semifinal_two)=semifinal_two.away_id then semifinal_two.home_id
+  end;
+
+  if loser_one is not null and loser_two is not null then
+   update public.matches
+   set home_id=loser_one,
+       away_id=loser_two
+   where competition_id=c.id
+     and round=log(2,c.size)::integer
+     and slot=2
+     and status='scheduled';
+  end if;
+ end loop;
+end
+$$;
+
 commit;

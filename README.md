@@ -65,6 +65,7 @@ La URL y clave pública ya están en `dist/config.js`. Nunca colocar claves secr
 - **Liga:** tabla calculada solo con partidos de liga finalizados. Victoria 3 puntos, empate 1. Desempates por diferencia de gol y goles a favor; nombre para presentar un orden provisional en igualdad total.
 - **Copa:** el administrador selecciona 4, 8 o 16 equipos. El orden mostrado define los cruces iniciales. Cada ronda se programa 7 días después de la anterior; fecha y cancha se editan desde Marcadores y eventos.
 - Al finalizar un partido de copa, su ganador avanza automáticamente en una transacción. Un empate necesita un marcador de penales con ganador. El campeón se destaca en el cuadro.
+- El partido por el tercer lugar lo juegan los dos perdedores de semifinales. Los dos ganadores de semifinales juegan exclusivamente la final.
 - Para corregir un ganador, la siguiente fase debe estar programada y sin eventos. Se limpian su resultado y sus alineaciones. Si empezó, hay que reabrirla primero, desde la última fase afectada.
 - Marcador y eventos se registran por separado: los eventos alimentan goleadores y tarjetas, pero no incrementan el resultado oficial.
 - Realtime actualiza las vistas públicas. Los formularios enfocados se conservan durante una actualización.
