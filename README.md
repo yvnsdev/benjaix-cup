@@ -1,12 +1,18 @@
 # Benjaix Cup
 
+## Fútbol 7 exclusivamente
+
+Todos los partidos son de fútbol 7: un portero y seis jugadores de campo. El editor permite únicamente 3-1-2, 3-2-1, 3-1-1-1, 2-3-1, 2-2-2 y 2-1-2-1, con exactamente siete titulares. El plantel puede tener suplentes adicionales.
+
+Ejecutar `supabase/012_football_seven_only.sql` después de 010/011 para aplicar también la validación en Supabase. La migración no elimina ni recorta alineaciones anteriores: las incompatibles se muestran como registros pendientes de revisión, y se deben volver a asignar sus titulares antes del partido. No se modifican alineaciones históricas de partidos ya comenzados.
+
 ## Actualización 010: formaciones, bases y escudos
 
 Si ya aplicaste 010 y subir escudos devuelve `new row violates row-level security policy`, ejecuta `supabase/011_fix_crest_storage_policies.sql`. Corrige una referencia ambigua: dentro de la consulta a equipos, `name` se interpretaba como el nombre del equipo, en lugar de la ruta del archivo. La corrección conserva RLS y los permisos de capitán/administrador; no borra escudos. No vuelvas a ejecutar 010 sobre una instalación que ya la aplicó.
 
 Después de las migraciones 001–009, ejecutar **una vez** `supabase/010_formations_rules_crests.sql` en SQL Editor. No recrear el esquema. La publicación del frontend no ejecuta SQL ni crea el bucket automáticamente. Esta actualización conserva datos existentes y añade:
 
-- 15 formaciones fijas de fútbol 7 y 11. El capitán asigna un jugador distinto a cada casilla; el orden se guarda en `slot_player_ids` y la cancha respeta esas posiciones. Las alineaciones anteriores se muestran ordenadas por rol y dorsal hasta que se revisen antes del inicio.
+- Formaciones fijas de fútbol 7 (la actualización 012 retira los esquemas de once). El capitán asigna un jugador distinto a cada casilla; el orden se guarda en `slot_player_ids` y la cancha respeta esas posiciones.
 - Edición administrativa del nombre y reglamento de cada copa, y del reglamento de liga desde el menú Reglamento. La creación de copa y sus bases es atómica mediante `create_cup_with_rules`. El tamaño y los participantes de copas existentes mantienen su historial; fecha y cancha se editan por partido.
 - Bucket público `team-crests`: archivos WebP de hasta 64 KiB; escritura y eliminación solo por el capitán propietario o un administrador. El navegador reduce la imagen a 256 px por su lado mayor, mantiene la proporción/transparencia y convierte antes de enviarla. Formatos que el navegador no pueda decodificar se rechazan sin subir el original.
 - URLs de escudo versionadas, caché de un año, carga diferida y eliminación del archivo anterior tras guardar el nuevo. La CDN reduce transferencias repetidas, pero no garantiza egress cero. Los originales no se almacenan. Si falla la limpieza, revisar archivos huérfanos desde Storage.
@@ -70,7 +76,7 @@ La URL y clave pública ya están en `dist/config.js`. Nunca colocar claves secr
 - Los correos se resuelven en el servidor y no se publican en los planteles. Las membresías solo las leen el usuario correspondiente, su capitán y la administración.
 - Un jugador ve sus equipos en el panel. No puede modificar el equipo, plantel, alineación ni marcadores.
 - Los permisos son **por equipo**: ser jugador de otro equipo no elimina la gestión de un equipo propio. Registrarse no concede permisos globales de capitán.
-- El capitán publica de 1 a 11 titulares antes del partido. La base bloquea cambios al comenzar. No puede cambiar su rol, asignación ni resultados.
+- El capitán publica exactamente 7 titulares antes del partido. La base bloquea cambios al comenzar. No puede cambiar su rol, asignación ni resultados.
 - Para quitar un jugador usa Quitar. Los jugadores con eventos se conservan por su historial; si están en alineaciones, hay que retirarlos de ellas primero.
 
 ## Liga y copas

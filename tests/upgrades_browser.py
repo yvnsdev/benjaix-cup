@@ -92,7 +92,7 @@ try:
    assert page.locator('#modal').evaluate('(e)=>e.scrollWidth<=e.clientWidth')
    page.screenshot(path=str(root/f'.qa/split-timeline-{width}.png'))
    page.locator('[data-match-view=lineups]').click()
-   assert page.locator('.tactical-pitch .pitch-player').count()==11
+   assert page.locator('.tactical-pitch .pitch-player').count()==7
    assert page.locator('#modal').evaluate('(e)=>e.scrollWidth<=e.clientWidth')
    page.locator('.close').click()
    page.goto('http://127.0.0.1:4176/#copa')

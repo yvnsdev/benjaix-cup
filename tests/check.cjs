@@ -90,7 +90,7 @@ run("const finalGame=data.matches.find(m=>m.competition_id==='cup-demo'&&m.round
 run("const thirdGame=data.matches.find(m=>m.competition_id==='cup-demo'&&m.round===3&&m.slot===2);thirdGame.status='finished';thirdGame.home_score=1;thirdGame.away_score=0");
 assert.equal(run('currentCupPhase(demoCup).complete'),true);
 assert.ok(run('homeCupSection()').includes('CAMPEÓN'));
-assert.equal(run("matchParticipants('m0').length"),22);
+assert.equal(run("matchParticipants('m0').length"),14);
 assert.throws(()=>run("castDemoVote('m0','p0-14')"),/candidato/,'Bench players without participation are not candidates');
 run("data.events.push({id:'sub-event',match_id:'m0',team_id:'t0',player_id:'p0-14',minute:70,type:'goal'});syncDemoLivePoll('m0');castDemoVote('m0','p0-14')");
 assert.equal(run("ownVote('m0')"),'p0-14');
@@ -103,6 +103,7 @@ assert.ok(!run('expertView()').includes('Votar ahora'),'Showcase is not a ballot
 console.log('PASS: current cup phase, partial rounds, champion, live participants, substitute events, automatic close and recent showcase.');
 run('data=structuredClone(initial);prepareDemo()');
 for(const name of run('Object.keys(FORMATIONS)')){
+ assert.equal(run(`FORMATIONS['${name}'].size`),7,'Only football seven is supported');
  const slots=run(`formationSlots('${name}')`);
  assert.equal(slots.length,run(`FORMATIONS['${name}'].size`));
  assert.equal(new Set(slots.map(s=>`${s.x},${s.y}`)).size,slots.length);
@@ -123,3 +124,10 @@ run("applyRealtime({table:'expert_totals',eventType:'UPDATE',new:{match_id:'m0',
 assert.equal(run("data.expert_totals.find(r=>r.match_id==='m0'&&r.player_id==='p0-0').votes"),17);
 assert.equal(run("applyRealtime({table:'expert_totals',eventType:'DELETE',old:{match_id:'m0'}})"),false,'Incomplete keys require a bounded table refresh');
 console.log('PASS: all fixed formations, unified statistics including card-only players, bracket edges, split timeline and incremental Realtime updates.');
+assert.equal(run("formationSlots('4-3-3').length"),0);
+assert.equal(run("isSevenLineup({formation:'3-1-2',player_ids:Array(11).fill('x')})"),false);
+run("data.lineups.push({match_id:'m1',team_id:'t2',formation:'4-3-3',player_ids:data.players.filter(p=>p.team_id==='t2').slice(0,11).map(p=>p.id)})");
+assert.ok(run("lineupView(data.matches.find(m=>m.id==='m1'),'t2')").includes('registro original'));
+assert.ok(!run("lineupView(data.matches.find(m=>m.id==='m1'),'t2')").includes('tactical-pitch'));
+assert.equal(run("data.lineups.find(l=>l.match_id==='m1').player_ids.length"),11,'Historical data is not silently truncated');
+console.log('PASS: seven starters only, eleven-player formations rejected, historical lineups preserved.');
