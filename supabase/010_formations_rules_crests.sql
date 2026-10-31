@@ -41,9 +41,9 @@ on conflict(id) do update set public=true,file_size_limit=65536,allowed_mime_typ
 -- Public retrieval for CDN caching. Writes are restricted to the owning captain/admin.
 create policy team_crest_insert on storage.objects for insert to authenticated with check(
  bucket_id='team-crests' and name ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}\.webp$'
- and exists(select 1 from public.teams t where t.id::text=(storage.foldername(name))[1] and (t.captain_id=auth.uid() or public.is_admin())));
+ and exists(select 1 from public.teams t where t.id::text=(storage.foldername(storage.objects.name))[1] and (t.captain_id=auth.uid() or public.is_admin())));
 create policy team_crest_delete on storage.objects for delete to authenticated using(
- bucket_id='team-crests' and exists(select 1 from public.teams t where t.id::text=(storage.foldername(name))[1] and (t.captain_id=auth.uid() or public.is_admin())));
+ bucket_id='team-crests' and exists(select 1 from public.teams t where t.id::text=(storage.foldername(storage.objects.name))[1] and (t.captain_id=auth.uid() or public.is_admin())));
 create policy team_crest_owner_read on storage.objects for select to authenticated using(
- bucket_id='team-crests' and exists(select 1 from public.teams t where t.id::text=(storage.foldername(name))[1] and (t.captain_id=auth.uid() or public.is_admin())));
+ bucket_id='team-crests' and exists(select 1 from public.teams t where t.id::text=(storage.foldername(storage.objects.name))[1] and (t.captain_id=auth.uid() or public.is_admin())));
 commit;

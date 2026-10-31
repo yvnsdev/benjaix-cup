@@ -2,6 +2,8 @@
 
 ## Actualización 010: formaciones, bases y escudos
 
+Si ya aplicaste 010 y subir escudos devuelve `new row violates row-level security policy`, ejecuta `supabase/011_fix_crest_storage_policies.sql`. Corrige una referencia ambigua: dentro de la consulta a equipos, `name` se interpretaba como el nombre del equipo, en lugar de la ruta del archivo. La corrección conserva RLS y los permisos de capitán/administrador; no borra escudos. No vuelvas a ejecutar 010 sobre una instalación que ya la aplicó.
+
 Después de las migraciones 001–009, ejecutar **una vez** `supabase/010_formations_rules_crests.sql` en SQL Editor. No recrear el esquema. La publicación del frontend no ejecuta SQL ni crea el bucket automáticamente. Esta actualización conserva datos existentes y añade:
 
 - 15 formaciones fijas de fútbol 7 y 11. El capitán asigna un jugador distinto a cada casilla; el orden se guarda en `slot_player_ids` y la cancha respeta esas posiciones. Las alineaciones anteriores se muestran ordenadas por rol y dorsal hasta que se revisen antes del inicio.
