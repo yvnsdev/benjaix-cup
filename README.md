@@ -1,5 +1,9 @@
 # Benjaix Cup
 
+## Cambios de jugadores (014)
+
+Ejecutar `supabase/014_match_substitutions.sql` después de 013. El administrador podrá registrar quién sale y quién entra durante un partido iniciado. Los siete titulares parten en cancha y los demás jugadores del plantel aparecen como suplentes; los cambios posteriores actualizan ambas listas y permiten reingresos. La función de base de datos valida equipo, alineación, minuto y orden cronológico.
+
 ## Administraci?n de copas (013)
 
 Ejecutar `supabase/013_cup_management.sql` despu?s de 012 en el SQL Editor de Supabase para habilitar editar cruces y borrar copas existentes. Publicar el frontend no aplica esta migraci?n. Ambas funciones verifican el rol administrador en el servidor y realizan los cambios en una transacci?n.
