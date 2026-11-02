@@ -178,3 +178,7 @@ assert.equal(run("penaltyKick(penaltyMatch.id,penaltyMatch.home_id,2).outcome"),
 assert.ok(run('penaltyShootout(penaltyMatch,true)').includes('data-penalty-match'));
 assert.equal(run("penaltyShootout({...penaltyMatch,period:'second_half'},true)"),'');
 console.log('PASS: halftime and five-kick penalty shootout states.');
+run("data=structuredClone(initial);var hiddenPenaltyMatch={...data.matches[0],period:'second_half',penalty_home:0,penalty_away:0};var visiblePenaltyMatch={...hiddenPenaltyMatch,period:'penalties'}");
+assert.ok(!run('matchCard(hiddenPenaltyMatch)').includes('Pen. 0'));
+assert.ok(run('matchCard(visiblePenaltyMatch)').includes('Pen. 0'));
+console.log('PASS: penalty score is visible only during the PEN phase.');
