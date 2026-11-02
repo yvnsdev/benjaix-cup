@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "Benjaix Cup",
-  "short_name": "B Cup",
+  "name": "Manager Benjaix",
+  "short_name": "Manager Benjaix",
   "description": "Partidos, resultados, equipos y alineaciones de Benjaix Cup.",
   "lang": "es-CL",
   "start_url": "./#inicio",
