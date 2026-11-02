@@ -1,5 +1,15 @@
 # Benjaix Cup
 
+## Navegación y tareas de gestión
+
+La vista de partidos muestra primero los encuentros en vivo, luego los programados desde la fecha más próxima y finalmente los resultados más recientes. Permite buscar sin tildes por equipo, competencia o cancha, combinar competencia y fecha de Chile, limpiar filtros y recorrer páginas de nueve encuentros. Los filtros se conservan al cambiar de vista durante la sesión.
+
+En móvil hay accesos fijos a Inicio, Partidos, Copas, Mi panel y Más. Las fichas se abren a pantalla completa, admiten Escape y un botón Volver, y restauran el foco al cerrarse. La administración puede entrar al editor desde la ficha pública.
+
+El editor del partido separa Partido y estado, Goles y eventos, Cambios y Votación. Al elegir un encuentro se recoge el buscador; Otro partido lo vuelve a abrir. Los eventos tienen accesos rápidos por tipo. El selector de equipo se muestra en planteles y alineaciones. Cambiar de tarea conserva los formularios; las acciones que sustituyen un borrador piden confirmar su descarte. Las actualizaciones en vivo no reemplazan un buscador mientras se está utilizando.
+
+Verificación: `node tests/check.cjs` comprueba la lógica del campeonato y los nuevos filtros; `python tests/interaction_browser.py` recorre búsquedas, paginación, teclado, fichas, guardado de eventos y navegación a 320/390 px con datos de demostración y Edge/Playwright. No modifica Supabase.
+
 ## Eventos de lesión (017)
 
 Ejecutar `supabase/017_injury_events.sql` después de 016. Añade “Lesión (+)” al registro administrativo de eventos y la muestra con un signo médico `+` en el minuto a minuto, sin modificar el marcador.

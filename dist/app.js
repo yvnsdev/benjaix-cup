@@ -110,7 +110,7 @@ for(const event of ['input','change'])document.addEventListener(event,e=>{
 },true);
 function hasFormDraft(root=document){return [...root.querySelectorAll('form')].some(form=>draftForms.has(form));}
 function refreshVisibleData(){
- if(!hasFormDraft($('#app'))&&!document.activeElement?.closest('form'))render();
+ if(!hasFormDraft($('#app'))&&!document.activeElement?.closest('form,.match-discovery,.match-browser'))render();
  if($('#modal').open&&activeMatch&&!hasFormDraft($('#modal')))showMatch(activeMatch.id,activeMatch.side);
 }
 async function init(){prepareDemo();render();hydrateIcons();const c=window.BENJAIX_CONFIG;if(!c?.supabaseUrl||!c?.supabaseKey){$('#connection').textContent='Modo demo';document.body.classList.remove('app-loading');return;}$('#connection').textContent='Conectando…';try{const {createClient}=await import('https://esm.sh/@supabase/supabase-js@2.49.1');db=createClient(c.supabaseUrl,c.supabaseKey);const {data:auth,error}=await db.auth.getSession();if(error)throw error;await loadProfile(auth.session);demo=false;await refresh();render();document.body.classList.remove('app-loading');if(auth.session&&location.hash.includes('access_token'))location.hash='panel';$('#connection').textContent='Conectado a Supabase';db.channel('benjaix-v2').on('postgres_changes',{event:'*',schema:'public'},payload=>queueRealtime(payload)).subscribe(status=>{$('#connection').textContent=status==='SUBSCRIBED'?'Datos en tiempo real':status==='CHANNEL_ERROR'||status==='TIMED_OUT'?'Conectado · tiempo real sin conexión':'Conectando tiempo real…';});authUserId=auth.session?.user?.id||null;db.auth.onAuthStateChange(handleAuthStateChange);}catch(err){demo=true;profile=null;memberships=[];data=structuredClone(initial);prepareDemo();$('#connection').textContent='Demo · actualización pendiente';render();document.body.classList.remove('app-loading');toast('La base de datos no está disponible o falta actualizarla. Estás viendo una demo.');console.warn('Supabase:',err.message);}}
@@ -407,7 +407,7 @@ function editDemoCupPairings(id,ids){
  games.forEach((m,i)=>{if(m.home_id===ids[i*2]&&m.away_id===ids[i*2+1])return;data.lineups=data.lineups.filter(l=>l.match_id!==m.id);m.home_id=ids[i*2];m.away_id=ids[i*2+1];});
 }
 function deleteDemoCup(id){
- if(!isAdmin())throw Error('Solo la administraci?n puede borrar copas.');
+ if(!isAdmin())throw Error('Solo la administración puede borrar copas.');
  if(competition(id)?.format!=='cup')throw Error('Copa no encontrada.');
  const ids=data.matches.filter(m=>m.competition_id===id).map(m=>m.id);
  for(const key of ['events','lineups','expert_polls','expert_candidates','expert_totals','demo_votes'])if(data[key])data[key]=data[key].filter(row=>!ids.includes(row.match_id));
@@ -497,4 +497,168 @@ const phaseAwareRender=render;
 render=function(){phaseAwareRender();document.querySelectorAll('.home-cup-match[data-open-match]').forEach(button=>{const m=data.matches.find(match=>match.id===button.dataset.openMatch),label=button.querySelector('.match-meta span:first-child');if(m?.status==='live'&&label)label.innerHTML=`En vivo · ${periodBadge(m)}`;if(m?.period!=='penalties')button.querySelector('.penalty-note')?.remove();});};
 document.addEventListener('click',e=>{const button=e.target.closest('[data-delete-event]');if(!demo||!button)return;const goal=data.events.find(event=>event.id===button.dataset.deleteEvent&&event.type==='goal');if(!goal)return;setTimeout(()=>{if(data.events.some(event=>event.id===goal.id))return;syncDemoScore(goal.match_id);localStorage.setItem('benjaix-demo-v2',JSON.stringify(data));render();},0);},true);
 document.addEventListener('click',async e=>{const button=e.target.closest('[data-penalty-match]');if(!button)return;button.disabled=true;try{const matchId=button.dataset.penaltyMatch,teamId=button.dataset.penaltyTeam,kickNumber=Number(button.dataset.penaltyNumber),outcome=PENALTY_OUTCOMES[button.dataset.penaltyOutcome].next;if(demo)setDemoPenaltyKick(matchId,teamId,kickNumber,outcome);else await rpc('set_penalty_kick',{target_match:matchId,target_team:teamId,target_kick:kickNumber,target_outcome:outcome});render();toast(outcome==='goal'?'Penal marcado como gol':outcome==='miss'?'Penal marcado como fallado':'Penal pendiente');}catch(error){toast(error.message);}finally{button.disabled=false;} });
+// Discovery state survives view changes and live updates without resetting filters.
+const matchDiscovery={competition:'all',day:'',page:0};
+const matchDay=m=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Santiago',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(m.kickoff));
+function discoveryRows(){
+ const query=normalizeSearch(search.trim());
+ return data.matches.filter(m=>(filter==='all'||m.status===filter)&&
+  (matchDiscovery.competition==='all'||m.competition_id===matchDiscovery.competition)&&
+  (!matchDiscovery.day||matchDay(m)===matchDiscovery.day)&&
+  normalizeSearch(`${team(m.home_id).name} ${team(m.away_id).name} ${matchStage(m)} ${m.venue}`).includes(query))
+  .sort((a,b)=>({live:0,scheduled:1,finished:2}[a.status]-{live:0,scheduled:1,finished:2}[b.status])||
+   (a.status==='finished'?b.kickoff.localeCompare(a.kickoff):a.kickoff.localeCompare(b.kickoff))||a.id.localeCompare(b.id));
+}
+matches=function(){
+ return heading('Partidos','Sigue los encuentros en vivo, prepara la próxima fecha o revisa los resultados.')+`
+ <section class="match-discovery" aria-label="Buscar y filtrar partidos">
+  <div class="match-status-tabs" aria-label="Estado del partido">${[['all','Todos'],['live','En vivo'],['scheduled','Próximos'],['finished','Resultados']].map(([value,label])=>`<button type="button" data-discovery-status="${value}" aria-pressed="${filter===value}" class="${filter===value?'selected':''}">${label}<small>${data.matches.filter(m=>value==='all'||m.status===value).length}</small></button>`).join('')}</div>
+  <div class="match-search-fields"><label>Buscar partido<input id="search" type="search" placeholder="Equipo, competencia o cancha" value="${esc(search)}" autocomplete="off"></label>
+  <label>Competencia<select id="discovery-competition"><option value="all">Todas las competencias</option>${options(data.competitions||[],'id','name',matchDiscovery.competition)}</select></label>
+  <label>Fecha en Chile<input id="discovery-day" type="date" value="${esc(matchDiscovery.day)}"></label></div>
+  <div class="results-summary"><span id="discovery-count" role="status"></span><button type="button" class="outline" data-reset-matches>Limpiar filtros</button></div>
+ </section><div class="match-results" id="match-list">${filteredMatches()}</div>`;
+};
+filteredMatches=function(){
+ const rows=discoveryRows(),size=9,pages=Math.max(1,Math.ceil(rows.length/size));
+ matchDiscovery.page=Math.max(0,Math.min(matchDiscovery.page,pages-1));
+ const groups=new Map();
+ for(const m of rows.slice(matchDiscovery.page*size,(matchDiscovery.page+1)*size)){
+  const key=m.status+'|'+matchDay(m);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(m);
+ }
+ if(!rows.length)return `<div class="empty"><h3>${data.matches.length?'No encontramos partidos':'El calendario se está preparando'}</h3><p>${data.matches.length?'Prueba con otro equipo o elimina los filtros para ver todos los encuentros.':'Los encuentros aparecerán aquí cuando la organización los programe.'}</p>${data.matches.length?'<button type="button" data-reset-matches>Ver todos los partidos</button>':''}</div>`;
+ return [...groups.values()].map(group=>`<section class="match-date-group"><h2>${group[0].status==='live'?'<span class="live-dot"></span> En vivo':group[0].status==='scheduled'?'Próximos encuentros':'Resultados'} <small>· ${new Intl.DateTimeFormat('es-CL',{weekday:'short',day:'numeric',month:'long',year:'numeric',timeZone:'America/Santiago'}).format(new Date(group[0].kickoff))}</small></h2><div class="grid">${group.map(matchCard).join('')}</div></section>`).join('')+
+ (pages>1?`<div class="match-list-pagination"><button type="button" class="outline" data-discovery-page="-1" ${matchDiscovery.page===0?'disabled':''}>← Anterior</button><span>Página ${matchDiscovery.page+1} de ${pages}</span><button type="button" class="outline" data-discovery-page="1" ${matchDiscovery.page===pages-1?'disabled':''}>Siguiente →</button></div>`:'');
+};
+function updateDiscovery(resetPage=false){
+ if(resetPage)matchDiscovery.page=0;
+ const list=$('#match-list');if(!list)return;
+ list.innerHTML=filteredMatches();hydrateIcons(list);updateDiscoveryCount();
+}
+function updateDiscoveryCount(){
+ const count=$('#discovery-count');if(count){const total=discoveryRows().length;count.textContent=`${total} ${total===1?'partido encontrado':'partidos encontrados'} · En vivo primero`;}
+ document.querySelectorAll('[data-discovery-status]').forEach(button=>{const selected=button.dataset.discoveryStatus===filter;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));});
+ const reset=$('.match-discovery [data-reset-matches]');if(reset)reset.hidden=filter==='all'&&!search&&!matchDiscovery.day&&matchDiscovery.competition==='all';
+}
+function resetMatchDiscovery(){
+ filter='all';search='';Object.assign(matchDiscovery,{competition:'all',day:'',page:0});
+ if($('#search'))$('#search').value='';if($('#discovery-day'))$('#discovery-day').value='';if($('#discovery-competition'))$('#discovery-competition').value='all';
+ updateDiscovery();$('#search')?.focus({preventScroll:true});
+}
+
+let editorView='match',editorMatchId='',dialogOpener=null;
+function showEditorView(key,focus=false){
+ const target=$('#score-editor');if(!target)return;
+ if(!target.querySelector(`[data-editor-pane="${key}"]`))key='match';
+ editorView=key;
+ target.querySelectorAll('[data-editor-pane]').forEach(pane=>pane.hidden=pane.dataset.editorPane!==key);
+ target.querySelectorAll('[data-editor-view]').forEach(button=>{const selected=button.dataset.editorView===key;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));});
+ if(focus)target.querySelector(`[data-editor-view="${key}"]`)?.focus({preventScroll:true});
+}
+function organizeMatchEditor(id){
+ const target=$('#score-editor'),m=data.matches.find(match=>match.id===id);
+ if(!target||!m||target.querySelector('.editor-tabs'))return;
+ if(editorMatchId!==id){editorView='match';editorMatchId=id;}
+ const panes=new Map();
+ for(const key of ['match','events','substitutions','votes']){const pane=document.createElement('section');pane.className='editor-pane';pane.dataset.editorPane=key;panes.set(key,pane);}
+ for(const node of [...target.children]){
+  const key=node.id==='score-form'||node.classList.contains('penalty-shootout')?'match':
+   node.classList.contains('substitution-editor')||node.classList.contains('substitution-notice')?'substitutions':node.classList.contains('expert-admin')?'votes':'events';
+  panes.get(key).append(node);
+ }
+ target.innerHTML=`<div class="admin-editor-heading" tabindex="-1"><div><span class="eyebrow">PARTIDO SELECCIONADO · ${statusText[m.status]}</span><h3>${esc(team(m.home_id).name)} vs ${esc(team(m.away_id).name)}</h3><p>${esc(matchStage(m))} · ${date(m.kickoff)}</p></div><div class="editor-context-actions"><button type="button" class="outline" data-open-match="${esc(id)}">Ver ficha ${icon('arrow')}</button><button type="button" class="outline" data-change-encounter>Otro partido</button></div></div>
+ <div class="editor-tabs" aria-label="Tareas del partido">${[['match','Partido y estado'],['events','Goles y eventos'],['substitutions','Cambios'],['votes','Votación']].map(([key,label])=>`<button type="button" data-editor-view="${key}">${label}</button>`).join('')}</div>`;
+ for(const [key,pane] of panes){if(!pane.children.length)pane.innerHTML='<p class="empty">Esta opción estará disponible cuando el partido tenga los datos necesarios.</p>';target.append(pane);}
+ const form=$('#event-form');
+ if(form){form.insertAdjacentHTML('beforebegin',`<div class="event-shortcuts" aria-label="Tipo de evento">${[['goal','Gol'],['assist','Asistencia'],['yellow','Amarilla'],['red','Roja'],['injury','Lesión']].map(([key,label])=>`<button type="button" data-event-type="${key}" aria-pressed="${key===form.elements.type.value}" class="${key===form.elements.type.value?'selected':''}">${eventLabel(key)}</button>`).join('')}</div>`);}
+ showEditorView(editorView);
+ const picker=$('[data-browser="manage-match"]');if(picker)picker.hidden=true;
+}
+const interactionExpertAdmin=expertAdmin;
+expertAdmin=function(id){interactionExpertAdmin(id);organizeMatchEditor(id);};
+const interactionManagementSection=showManagementSection;
+showManagementSection=function(key){
+ interactionManagementSection(key);
+ const control=$('.admin-team-control');if(control)control.hidden=!['roster','lineups'].includes(key);
+};
+const interactionPanel=enhancePanel;
+enhancePanel=function(){
+ interactionPanel();if(location.hash!=='#panel')return;
+ showManagementSection(managementSection);
+ if(selectedMatch&&$('#score-form')){const picker=$('[data-browser="manage-match"]');if(picker)picker.hidden=true;}
+ const hints=$('.management-section[data-section="matches"] .workflow-guide');
+ if(hints)hints.innerHTML='<li>1. Elige un encuentro</li><li>2. Guarda su estado y fase</li><li>3. Registra goles, tarjetas o cambios</li>';
+ const schedule=$('#match-form');if(schedule){const home=schedule.elements.home_id,away=schedule.elements.away_id;for(const option of away.options)option.disabled=option.value===home.value;if(home.value===away.value)away.value=[...away.options].find(option=>!option.disabled)?.value||'';}
+};
+function syncNavigation(){
+ const route=location.hash.slice(1)||'inicio';
+ const names={inicio:'Vista general',partidos:'Partidos',tabla:'Tabla de posiciones',copa:'Copas',equipos:'Equipos',estadisticas:'Estadísticas',experto:'Experto Tanzy',reglamento:'Reglamento',panel:'Mi panel'};
+ document.title=`${names[route]||'Benjaix Cup'} · Benjaix Cup`;
+ document.querySelectorAll('[data-nav]').forEach(link=>{if(link.dataset.nav===route)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
+ document.querySelectorAll('a[href="#panel"] .panel-link-label').forEach(label=>label.textContent=(demo?demoProfile:profile)?'Mi panel':'Ingresar');
+ updateDiscoveryCount();
+}
+const interactionRender=render;
+render=function(){interactionRender();syncNavigation();};
+function closeMobileMenu(){
+ $('.sidebar')?.classList.remove('mobile-menu-open');$('#mobile-more')?.setAttribute('aria-expanded','false');
+}
+const interactionShow=show;
+show=function(html){if(!$('#modal').open)dialogOpener=document.activeElement;interactionShow(html);};
+const interactionShowMatch=showMatch;
+showMatch=function(id,side){
+ interactionShowMatch(id,side);if(!activeMatch)return;
+ $('#modal-content').insertAdjacentHTML('afterbegin',`<div class="dialog-actions"><button type="button" class="outline" data-dialog-back>← Volver</button>${isAdmin()?`<button type="button" class="outline" data-manage-encounter="${esc(id)}">Administrar partido</button>`:''}</div>`);
+};
+function focusMatchEditor(){
+ const target=$('#score-editor .admin-editor-heading');target?.scrollIntoView({block:'start',behavior:'auto'});target?.focus({preventScroll:true});
+}
+document.addEventListener('input',e=>{if(e.target.id==='search'){matchDiscovery.page=0;updateDiscovery();}});
+document.addEventListener('change',e=>{
+ if(e.target.id==='discovery-competition'){matchDiscovery.competition=e.target.value;updateDiscovery(true);}
+ if(e.target.id==='discovery-day'){matchDiscovery.day=e.target.value;updateDiscovery(true);}
+ if(e.target.matches('#match-form [name="home_id"]')){const away=$('#match-form').elements.away_id;for(const option of away.options)option.disabled=option.value===e.target.value;if(away.value===e.target.value)away.value=[...away.options].find(option=>!option.disabled)?.value||'';}
+ if(e.target.matches('#event-form [name="type"]'))document.querySelectorAll('[data-event-type]').forEach(button=>{const selected=button.dataset.eventType===e.target.value;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));});
+});
+document.addEventListener('click',e=>{
+ const button=e.target.closest('button,a');if(!button)return;
+ if(button.matches('.skip-link')){e.preventDefault();$('#app').focus();$('#app').scrollIntoView({block:'start'});}
+ if(button.hasAttribute('data-discovery-status')){filter=button.dataset.discoveryStatus;updateDiscovery(true);}
+ if(button.hasAttribute('data-reset-matches'))resetMatchDiscovery();
+ if(button.hasAttribute('data-discovery-page')){matchDiscovery.page+=Number(button.dataset.discoveryPage);updateDiscovery();const list=$('#match-list');list.setAttribute('tabindex','-1');list.focus({preventScroll:true});list.scrollIntoView({block:'start'});}
+ if(button.hasAttribute('data-editor-view'))showEditorView(button.dataset.editorView,true);
+ if(button.hasAttribute('data-event-type')){const select=$('#event-form [name="type"]');select.value=button.dataset.eventType;select.dispatchEvent(new Event('change',{bubbles:true}));$('#event-form [name="player_id"]')?.focus({preventScroll:true});}
+ if(button.hasAttribute('data-change-encounter')){const picker=$('[data-browser="manage-match"]');if(picker)picker.hidden=false;const search=$('[data-browser="manage-match"] [data-browser-query]');search?.scrollIntoView({block:'center'});search?.focus({preventScroll:true});}
+ if(button.hasAttribute('data-pick-match')){if(button.dataset.picker==='manage-match')focusMatchEditor();else{const editor=$('#lineup-editor');editor?.setAttribute('tabindex','-1');editor?.scrollIntoView({block:'start'});editor?.focus({preventScroll:true});}}
+ if(button.hasAttribute('data-management')){const key=button.dataset.management;const heading=$(`.management-section[data-section="${key}"] .management-heading`);heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});heading?.scrollIntoView({block:'start'});if(button.dataset.agendaMatch&&key==='matches')focusMatchEditor();}
+ if(button.hasAttribute('data-dialog-back'))$('#modal').close();
+ if(button.hasAttribute('data-manage-encounter')){selectedMatch=button.dataset.manageEncounter;managementSection='matches';$('#modal').close();if(location.hash==='#panel'){render();focusMatchEditor();}else{location.hash='panel';setTimeout(focusMatchEditor,0);}}
+ if(button.id==='mobile-more'){const open=$('.sidebar').classList.toggle('mobile-menu-open');button.setAttribute('aria-expanded',String(open));if(open)$('.sidebar nav a')?.focus({preventScroll:true});}
+ if(button.matches('a[data-nav]'))closeMobileMenu();
+});
+document.addEventListener('keydown',e=>{
+ if(e.key===' '&&e.target.matches('article[role="button"]')){e.preventDefault();e.target.click();}
+ if(e.key==='Escape'&&$('.sidebar')?.classList.contains('mobile-menu-open')){closeMobileMenu();$('#mobile-more')?.focus();}
+});
+document.addEventListener('click',e=>{if(!e.target.closest('.sidebar,#mobile-more'))closeMobileMenu();});
+// Section tabs preserve forms; warn only when an action would replace a draft.
+document.addEventListener('click',e=>{
+ const target=e.target.closest('a,[data-pick-match],[data-agenda-match],[data-manage-encounter],#logout');if(!target)return;
+ let root=null;
+ if(target.matches('a[href^="#"]')&&!target.matches('.skip-link,[data-team]')&&target.getAttribute('href')!==location.hash)root=$('#app');
+ if(target.hasAttribute('data-pick-match')||target.hasAttribute('data-agenda-match')){
+  const id=target.dataset.pickMatch||target.dataset.agendaMatch;
+  if(target.dataset.picker==='lineup-match'||target.dataset.management==='lineups'){if(id!==managementLineup)root=$('#lineup-editor');}
+  else if(id!==selectedMatch)root=$('#score-editor');
+ }
+ if(target.hasAttribute('data-manage-encounter')||target.id==='logout')root=$('#app');
+ if(root&&hasFormDraft(root)&&!confirm('Tienes cambios sin guardar. ¿Quieres descartarlos y continuar?')){e.preventDefault();e.stopImmediatePropagation();}
+},true);
+document.addEventListener('change',e=>{
+ if(e.target.id==='owned-team'&&hasFormDraft($('#app'))&&!confirm('Tienes cambios sin guardar. ¿Quieres cambiar de equipo y descartarlos?')){e.target.value=selectedTeam;e.stopImmediatePropagation();}
+},true);
+window.addEventListener('beforeunload',e=>{if(hasFormDraft(document)){e.preventDefault();e.returnValue='';}});
+window.addEventListener('hashchange',()=>{closeMobileMenu();if($('#modal').open)$('#modal').close();$('#app')?.focus({preventScroll:true});});
+$('#modal').addEventListener?.('close',()=>{activeMatch=null;if(dialogOpener?.isConnected)dialogOpener.focus({preventScroll:true});});
+$('#modal').addEventListener?.('click',e=>{if(e.target!==$('#modal'))return;const rect=e.target.getBoundingClientRect();if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)e.target.close();});
 init();

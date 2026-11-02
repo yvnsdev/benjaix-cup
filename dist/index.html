@@ -17,14 +17,15 @@
     <meta name="apple-mobile-web-app-title" content="Benjaix Cup">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="enhancements.css"><link rel="stylesheet" href="statistics.css">
-<link rel="stylesheet" href="live.css"><link rel="stylesheet" href="management.css"><link rel="stylesheet" href="refinements.css"><link rel="stylesheet" href="upgrades.css"></head>
+<link rel="stylesheet" href="live.css"><link rel="stylesheet" href="management.css"><link rel="stylesheet" href="refinements.css"><link rel="stylesheet" href="upgrades.css"><link rel="stylesheet" href="interaction.css"></head>
 
 <body class="app-loading">
+    <a class="skip-link" href="#app">Saltar al contenido</a>
     <aside class="sidebar"><a class="brand brand-with-logo" href="#inicio" aria-label="Benjaix Cup · Inicio"><img class="brand-logo" src="assets/logo.png" alt="Benjaix Cup" width="128" height="128" decoding="async"></a>
         <div class="season"><span class="tiny">COMPETICIÓN</span><strong>Temporada 2026 <span
                     class="green"><span data-icon="chevron"></span></span></strong><small>Liga de fútbol · Chile</small></div><span
             class="nav-label">EXPLORA LA LIGA</span>
-        <nav><a href="#inicio" data-nav="inicio"><span data-icon="dashboard"></span> <span>Vista general</span></a><a href="#partidos"
+        <nav id="main-navigation" aria-label="Navegación principal"><a href="#inicio" data-nav="inicio"><span data-icon="dashboard"></span> <span>Vista general</span></a><a href="#partidos"
                 data-nav="partidos"><span data-icon="live"></span> <span>Partidos</span><b id="live-count">1</b></a><a href="#tabla"
                 data-nav="tabla"><span data-icon="table"></span> <span>Tabla de posiciones</span></a><a href="#copa" data-nav="copa"><span data-icon="trophy"></span><span>Cuadro de copa</span></a><a href="#equipos" data-nav="equipos"><span data-icon="teams"></span>
                 <span>Equipos</span></a><a href="#estadisticas" data-nav="estadisticas"><span data-icon="chart"></span>
@@ -40,12 +41,19 @@
         <header>
             <div><span class="green"><span data-icon="dot"></span></span> EL FÚTBOL NOS CONECTA</div>
             <div class="header-right"><span id="connection" class="connection">Cargando…</span><a href="#panel"
-                    class="button small">Ingresar <span><span data-icon="arrow"></span></span></a></div>
+                    class="button small"><span class="panel-link-label">Ingresar</span> <span><span data-icon="arrow"></span></span></a></div>
         </header>
         <main id="app" tabindex="-1"></main>
         <footer><span>BENJAIX CUP <span class="muted">/ Pasión dentro y fuera de la cancha.</span></span><span>Hecho
                 para nuestra comunidad <span data-icon="arrow"></span></span></footer>
     </div>
+    <nav class="mobile-nav" aria-label="Accesos rápidos">
+        <a href="#inicio" data-nav="inicio"><span data-icon="dashboard"></span><span>Inicio</span></a>
+        <a href="#partidos" data-nav="partidos"><span data-icon="live"></span><span>Partidos</span></a>
+        <a href="#copa" data-nav="copa"><span data-icon="trophy"></span><span>Copas</span></a>
+        <a href="#panel" data-nav="panel"><span data-icon="user"></span><span>Mi panel</span></a>
+        <button type="button" id="mobile-more" aria-expanded="false" aria-controls="main-navigation"><span data-icon="chevron"></span><span>Más</span></button>
+    </nav>
     <dialog id="modal"><button class="close" aria-label="Cerrar"><span data-icon="close"></span></button>
         <div id="modal-content"></div>
     </dialog>
