@@ -13,4 +13,7 @@ textarea{font:inherit;background:#10182d;color:var(--white);border:1px solid var
 @media(max-width:700px){.admin-team-control{flex-direction:column;align-items:stretch;gap:16px;padding:16px}.admin-team-control>label{min-width:0;max-width:none;flex:auto}.admin-team-identity{gap:12px}.admin-team-identity h2{font-size:20px}.admin-team-identity .crest-wrap{width:46px;height:54px}.admin-team-identity .eyebrow{font-size:9px;letter-spacing:1px}}
 .match-card .match-teams>.team{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;overflow-wrap:anywhere;text-align:center}
 .sidebar .brand-with-logo{justify-content:center;padding:0}.brand-logo{display:block;width:128px;height:128px;object-fit:contain}.brand-with-logo+.season{margin-top:24px}
+.hero-art{top:calc(50% - 185px)}
+.hero-art:before{content:'';display:block;width:270px;height:270px;background:url('assets/logo.png') center/contain no-repeat;transform:rotate(16deg);text-shadow:none}
+.hero-art:after{content:none}
 @media(max-width:900px){.sidebar .brand-with-logo{flex-shrink:0}.brand-logo{width:64px;height:64px}}

@@ -131,3 +131,10 @@ Sites conserva su acceso privado original. Para recibir visitantes externos debe
 - En producción faltan la migración y las verificaciones de entrega/confirmación de correo, permisos con cuentas reales y sincronización entre sesiones.
 
 Referencias oficiales: [registro](https://supabase.com/docs/reference/javascript/auth-signup), [reenvío](https://supabase.com/docs/reference/javascript/auth-resend), [correo y contraseñas](https://supabase.com/docs/guides/auth/passwords), [Realtime](https://supabase.com/docs/guides/realtime/postgres-changes).
+## Instalación en teléfonos (PWA)
+
+El directorio `dist` incluye `manifest.webmanifest`, `pwa.js`, `sw.js` y una página sin conexión. Publicar todo el directorio mediante HTTPS, conservando esos archivos en la misma ruta que `index.html`. El manifiesto usa rutas relativas para admitir subdirectorios.
+
+En Android, abrir el sitio en Chrome y usar el menú → Instalar aplicación / Agregar a pantalla principal. En iPhone, abrirlo en Safari → Compartir → Agregar a pantalla de inicio. La app se abre en modo independiente. Los partidos, resultados y el acceso a la cuenta necesitan internet: el service worker solo almacena el aviso sin conexión y no guarda respuestas de Supabase ni datos personales.
+
+El logo visible utiliza `dist/assets/logo.png`; los favicon de 16/32 px, el icono Apple de 180 px y los iconos PWA de 192/512 px derivan de esa imagen. Si se reemplaza el logo, regenerar también esos iconos y cambiar la versión de los enlaces del favicon.
