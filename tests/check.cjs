@@ -6,6 +6,13 @@ const stub={addEventListener(){},querySelector(){return {}},querySelectorAll(){r
 const context=vm.createContext({console,structuredClone,crypto:require('node:crypto').webcrypto,localStorage:{getItem(){return null}},document:stub,window:stub,location:{hash:''},Intl,setTimeout,clearTimeout});
 vm.runInContext(source,context);
 function run(code){return vm.runInContext(code,context);}
+run("demoProfile={id:'admin',role:'admin'}");
+assert.equal(run("JSON.stringify(orderedCupTeams({cupPairings:['t0','t3','t2','t1']},['t0','t1','t2','t3']))"),'["t0","t3","t2","t1"]');
+assert.throws(()=>run("orderedCupTeams({cupPairings:['t0','t0','t2','t3']},['t0','t1','t2','t3'])"),/distintos/);
+assert.throws(()=>run("orderedCupTeams({cupPairings:['t0','t4','t2','t3']},['t0','t1','t2','t3'])"),/distintos/);
+run("demoProfile={id:'member',role:'member'}");
+assert.throws(()=>run("orderedCupTeams({},['t0','t1','t2','t3'])"),/administración/);
+run('demoProfile=null');
 assert.equal(run("esc('<img onerror=\"bad\">')"),'&lt;img onerror=&quot;bad&quot;&gt;');
 assert.equal(run('standings().reduce((s,t)=>s+t.pj,0)'),16);
 assert.equal(run('standings().reduce((s,t)=>s+t.gf,0)'),run('standings().reduce((s,t)=>s+t.gc,0)'));
