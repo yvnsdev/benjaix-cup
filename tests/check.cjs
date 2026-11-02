@@ -138,3 +138,18 @@ assert.ok(run("lineupView(data.matches.find(m=>m.id==='m1'),'t2')").includes('re
 assert.ok(!run("lineupView(data.matches.find(m=>m.id==='m1'),'t2')").includes('tactical-pitch'));
 assert.equal(run("data.lineups.find(l=>l.match_id==='m1').player_ids.length"),11,'Historical data is not silently truncated');
 console.log('PASS: seven starters only, eleven-player formations rejected, historical lineups preserved.');
+
+run("data=structuredClone(initial);prepareDemo();demoProfile={id:'admin',role:'admin'}");
+run("const editableCup=data.competitions.find(c=>c.id==='cup-demo');const firstGames=data.matches.filter(m=>m.competition_id===editableCup.id&&m.round===1).sort((a,b)=>a.slot-b.slot);const originalIds=firstGames.flatMap(m=>[m.home_id,m.away_id]);const changedIds=originalIds.slice();[changedIds[1],changedIds[3]]=[changedIds[3],changedIds[1]];data.lineups.push({id:'test-lineup',match_id:firstGames[0].id});editDemoCupPairings(editableCup.id,changedIds)");
+assert.equal(run('firstGames[0].away_id'),run('originalIds[3]'));
+assert.equal(run("data.lineups.some(l=>l.id==='test-lineup')"),false);
+run("firstGames[0].status='live'");
+assert.throws(()=>run('editDemoCupPairings(editableCup.id,originalIds)'),/actividad/);
+run("demoProfile={id:'member',role:'member'}");
+assert.equal(run('cupEditForm(editableCup)'),'');
+assert.throws(()=>run('deleteDemoCup(editableCup.id)'),/administraci?n/);
+run("demoProfile={id:'admin',role:'admin'};const teamsBeforeDelete=data.teams.length;const otherMatches=data.matches.filter(m=>m.competition_id!==editableCup.id).length;deleteDemoCup(editableCup.id)");
+assert.equal(run('data.matches.length'),run('otherMatches'));
+assert.equal(run('data.teams.length'),run('teamsBeforeDelete'));
+assert.equal(run("data.competitions.some(c=>c.id==='cup-demo')"),false);
+console.log('PASS: cup editing, activity locks, admin access and isolated deletion.');

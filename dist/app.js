@@ -350,7 +350,45 @@ function renderMatchBrowser(id){const target=$(`[data-browser="${id}"] .browser-
 function rulesView(){const league=(data.competitions||[]).find(c=>c.format==='league');return heading('Reglamento','Bases oficiales de la competencia.')+`<section class="panel rule"><h2>${esc(league?.name||'Benjaix Cup')}</h2>${league?.rules?`<div class="rules-text">${esc(league.rules)}</div>`:'<p class="muted">La organización aún no ha publicado las bases oficiales.</p>'}${isAdmin()?rulesEditor(league):''}</section>`;}
 function isAdmin(){return (demo?demoProfile:profile)?.role==='admin';}
 function rulesEditor(c){return c?`<details class="team-settings"><summary>Editar reglamento</summary><form id="rules-form" data-id="${c.id}" class="form-grid"><label>Reglamento<textarea name="rules" rows="12" maxlength="20000" placeholder="Formato, inscripción, horarios, sanciones, desempates…">${esc(c.rules||'')}</textarea></label><button>Guardar reglamento</button></form></details>`:'';}
-function cupEditForm(c){return `<details class="team-settings cup-settings"><summary>Editar copa y reglamento · ${esc(c.name)}</summary><form id="cup-edit-${c.id}" data-cup-edit="${c.id}" class="form-grid"><label>Nombre<input name="name" value="${esc(c.name)}" maxlength="80" required></label><label>Reglamento de esta copa<textarea name="rules" rows="7" maxlength="20000">${esc(c.rules||'')}</textarea></label><p class="form-help">Las fechas, canchas y resultados se editan en cada partido. Los participantes y las fases conservan su historial.</p><button>Guardar copa</button></form></details>`;}
+function cupEditForm(c){
+ if(!isAdmin())return '';
+ const games=data.matches.filter(m=>m.competition_id===c.id&&m.round===1).sort((a,b)=>a.slot-b.slot),ids=games.flatMap(m=>[m.home_id,m.away_id]);
+ return `<details class="team-settings cup-settings"><summary>Editar copa ? ${esc(c.name)}</summary><form data-cup-edit="${c.id}" class="form-grid"><label>Nombre<input name="name" value="${esc(c.name)}" maxlength="80" required></label><label>Reglamento<textarea name="rules" rows="7" maxlength="20000">${esc(c.rules||'')}</textarea></label><button>Guardar copa</button></form><h3>Editar cruces de primera ronda</h3>${cupPairingsLocked(c.id)?'<p class="form-help">Los cruces est?n bloqueados porque la copa ya tiene actividad registrada.</p>':`<form data-cup-pairings="${c.id}" class="form-grid"><p class="form-help">Intercambia los equipos antes del inicio de la copa. Se retirar?n las alineaciones de los partidos que cambien.</p>${games.map((m,i)=>`<fieldset class="cup-pairing"><legend>Cruce ${m.slot}</legend>${[m.home_id,m.away_id].map((id,j)=>`<label>${j?'Rival':'Equipo'}<select name="pairing" data-existing-cup-slot="${i*2+j}" data-previous="${id}">${options(ids.map(team),'id','name',id)}</select></label>`).join('')}</fieldset>`).join('')}<button>Guardar cruces</button></form>`}<button type="button" class="outline" data-delete-cup="${c.id}">Borrar copa</button><p class="form-help">Borrar elimina todos sus partidos, eventos, alineaciones y votaciones. Los equipos y jugadores se conservan.</p></details>`;
+}
+function cupPairingsLocked(id){
+ const games=data.matches.filter(m=>m.competition_id===id),ids=games.map(m=>m.id);
+ return games.some(m=>m.status!=='scheduled'||m.home_score||m.away_score||m.minute||m.penalty_home!=null||m.penalty_away!=null)||data.events.some(e=>ids.includes(e.match_id))||(data.expert_polls||[]).some(p=>ids.includes(p.match_id));
+}
+function editDemoCupPairings(id,ids){
+ if(!isAdmin())throw Error('Solo la administraci?n puede editar cruces.');
+ const c=competition(id);if(c?.format!=='cup')throw Error('Copa no encontrada.');
+ if(cupPairingsLocked(id))throw Error('La copa ya tiene actividad registrada.');
+ const games=data.matches.filter(m=>m.competition_id===id&&m.round===1).sort((a,b)=>a.slot-b.slot),previous=games.flatMap(m=>[m.home_id,m.away_id]);
+ orderedCupTeams({cupPairings:ids},previous);
+ if(ids.length!==c.size)throw Error('El cuadro est? incompleto.');
+ games.forEach((m,i)=>{if(m.home_id===ids[i*2]&&m.away_id===ids[i*2+1])return;data.lineups=data.lineups.filter(l=>l.match_id!==m.id);m.home_id=ids[i*2];m.away_id=ids[i*2+1];});
+}
+function deleteDemoCup(id){
+ if(!isAdmin())throw Error('Solo la administraci?n puede borrar copas.');
+ if(competition(id)?.format!=='cup')throw Error('Copa no encontrada.');
+ const ids=data.matches.filter(m=>m.competition_id===id).map(m=>m.id);
+ for(const key of ['events','lineups','expert_polls','expert_candidates','expert_totals','demo_votes'])if(data[key])data[key]=data[key].filter(row=>!ids.includes(row.match_id));
+ myVotes=myVotes.filter(row=>!ids.includes(row.match_id));
+ data.matches=data.matches.filter(m=>!ids.includes(m.id));data.competitions=data.competitions.filter(c=>c.id!==id);
+}
+document.addEventListener('change',e=>{
+ if(!e.target.matches('[data-existing-cup-slot]')||!isAdmin())return;
+ const select=e.target,previous=select.dataset.previous,others=[...select.form.querySelectorAll('[name=pairing]')],other=others.find(s=>s!==select&&s.value===select.value);
+ if(other){other.value=previous;other.dataset.previous=previous;}select.dataset.previous=select.value;
+});
+document.addEventListener('click',async e=>{
+ const button=e.target.closest('[data-delete-cup]');if(!button)return;
+ try{if(!isAdmin())throw Error('Solo la administraci?n puede borrar copas.');const id=button.dataset.deleteCup,c=competition(id);if(c?.format!=='cup')throw Error('Copa no encontrada.');
+ if(!confirm(`?Borrar la copa ?${c.name}? y todos sus partidos, eventos, alineaciones y votaciones? Esta acci?n no se puede deshacer.`))return;
+ button.disabled=true;if(demo){deleteDemoCup(id);localStorage.setItem('benjaix-demo-v2',JSON.stringify(data));}else await rpc('delete_cup',{cup_id:id});
+ selectedCup='';selectedMatch='';render();toast('Copa eliminada');
+ }catch(err){toast(err.message);}finally{button.disabled=false;}
+});
 
 function bracketCard(m,c){const finalRound=Math.log2(c.size),third=m.round===finalRound&&m.slot===2;return `<button class="bracket-match ${m.status==='live'?'is-live':''}" data-open-match="${m.id}"><span class="bracket-meta"><span>${m.status==='scheduled'?date(m.kickoff):statusText[m.status]}</span><span>${third?'TERCER LUGAR':'CRUCE '+m.slot}</span></span>${['home','away'].map((side,i)=>`<span class="bracket-team ${winner(m)===m[side+'_id']&&m[side+'_id']?'winner':''}"><span>${crest(team(m[side+'_id']),true)}${esc(m[side+'_id']?team(m[side+'_id']).name:third?'Perdedor semifinal '+(i+1):m.round>1?'Ganador cruce '+((m.slot-1)*2+i+1):'Por definir')}</span><b>${m.status==='scheduled'?'–':m[side+'_score']}</b></span>`).join('')}${m.penalty_home!=null?`<small>Penales ${m.penalty_home} – ${m.penalty_away}</small>`:''}</button>`;}
 cupsView=function(){const cups=(data.competitions||[]).filter(c=>c.format==='cup');if(!cups.some(c=>c.id===selectedCup))selectedCup=cups[0]?.id||'';const c=competition(selectedCup);if(!c)return heading('El camino a la copa','Cada cruce cuenta.')+'<div class="panel empty">Todavía no hay copas creadas.</div>';
@@ -379,6 +417,7 @@ function promoteTeamControl(){
 }
 
 async function handleUpgradeForm(f,v,fd){
+ if(f.dataset.cupPairings){if(!isAdmin())throw Error('Solo la administraci?n puede editar cruces.');const id=f.dataset.cupPairings,ids=fd.getAll('pairing');if(demo){editDemoCupPairings(id,ids);localStorage.setItem('benjaix-demo-v2',JSON.stringify(data));}else await rpc('edit_cup_pairings',{cup_id:id,team_ids:ids});render();toast('Cruces guardados');return true;}
  if(f.id==='lineup-form'){const ids=[...f.querySelectorAll('[data-lineup-slot]')].map(s=>s.value),formation=v.formation;if(!FORMATIONS[formation]||ids.length!==FORMATIONS[formation].size||ids.some(id=>!id)||new Set(ids).size!==ids.length)throw Error('Completa cada posición con un jugador distinto.');const m=data.matches.find(m=>m.id===f.dataset.id);if(m.status!=='scheduled')throw Error('El partido ya comenzó.');if(ids.some(id=>player(id)?.team_id!==selectedTeam))throw Error('Todos los jugadores deben pertenecer al equipo.');const old=data.lineups.find(l=>l.match_id===m.id&&l.team_id===selectedTeam);await save('lineups',{match_id:m.id,team_id:selectedTeam,formation,player_ids:ids,slot_player_ids:ids},old?.id);render();return true;}
  if(f.id==='rules-form'||f.dataset.cupEdit){if(!isAdmin())throw Error('Solo la administración puede editar las bases.');const id=f.dataset.cupEdit||f.dataset.id,row={rules:v.rules.trim()};if(f.dataset.cupEdit)row.name=v.name.trim();await save('competitions',row,id);render();return true;}
  if(f.id==='cup-form'){const ids=orderedCupTeams(f,fd.getAll('team_ids'));if(![4,8,16].includes(ids.length))throw Error('Selecciona 4, 8 o 16 equipos.');if(!isAdmin())throw Error('Solo la administración puede crear copas.');if(demo){selectedCup=addDemoCup(v.cup_name.trim(),ids,v.first_kickoff,v.cup_venue);competition(selectedCup).rules=v.rules.trim();localStorage.setItem('benjaix-demo-v2',JSON.stringify(data));}else selectedCup=await rpc('create_cup_with_rules',{cup_name:v.cup_name.trim(),team_ids:ids,first_kickoff:new Date(v.first_kickoff).toISOString(),cup_venue:v.cup_venue,cup_rules:v.rules.trim()});location.hash='copa';render();toast('Copa creada');return true;}

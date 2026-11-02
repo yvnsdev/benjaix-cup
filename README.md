@@ -1,5 +1,12 @@
 # Benjaix Cup
 
+## Administraci?n de copas (013)
+
+Ejecutar `supabase/013_cup_management.sql` despu?s de 012 en el SQL Editor de Supabase para habilitar editar cruces y borrar copas existentes. Publicar el frontend no aplica esta migraci?n. Ambas funciones verifican el rol administrador en el servidor y realizan los cambios en una transacci?n.
+
+En Panel ? Copas o en el reglamento de la copa, ?Editar copa? permite cambiar nombre y bases, intercambiar participantes de la primera ronda antes de cualquier actividad y borrar la copa con confirmaci?n. Cambiar un cruce retira sus alineaciones; los partidos sin cambios conservan las suyas. Borrar elimina partidos, eventos, alineaciones y votaciones asociados; conserva equipos y jugadores.
+
+
 ## Fútbol 7 exclusivamente
 
 Todos los partidos son de fútbol 7: un portero y seis jugadores de campo. El editor permite únicamente 3-1-2, 3-2-1, 3-1-1-1, 2-3-1, 2-2-2 y 2-1-2-1, con exactamente siete titulares. El plantel puede tener suplentes adicionales.
