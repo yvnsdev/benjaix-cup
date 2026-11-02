@@ -1,5 +1,13 @@
 # Benjaix Cup
 
+## Entretiempo y tanda visual (016)
+
+Ejecutar `supabase/016_halftime_and_penalty_shootout.sql` después de 015. Añade Entretiempo (`ENT`) y una tanda pública de cinco penales por equipo. La tanda aparece únicamente cuando la fase es `PEN`; el administrador alterna cada balón entre pendiente, gol y fallo, y los goles verdes calculan automáticamente el marcador de penales.
+
+## Marcador por goles y fases (015)
+
+Ejecutar `supabase/015_event_score_and_match_period.sql` después de 014. Los partidos programados y en vivo pasan a calcular el marcador desde sus eventos de gol. Los resultados históricos finalizados sin eventos se conservan. La gestión del partido reemplaza el minuto general por Primer tiempo (PT), Segundo tiempo (ST), Primer/Segundo tiempo extra (ET) y Penales (PEN); el minuto exacto se mantiene en cada gol, tarjeta o cambio.
+
 ## Cambios de jugadores (014)
 
 Ejecutar `supabase/014_match_substitutions.sql` después de 013. El administrador podrá registrar quién sale y quién entra durante un partido iniciado. Los siete titulares parten en cancha y los demás jugadores del plantel aparecen como suplentes; los cambios posteriores actualizan ambas listas y permiten reingresos. La función de base de datos valida equipo, alineación, minuto y orden cronológico.
