@@ -182,3 +182,6 @@ run("data=structuredClone(initial);var hiddenPenaltyMatch={...data.matches[0],pe
 assert.ok(!run('matchCard(hiddenPenaltyMatch)').includes('Pen. 0'));
 assert.ok(run('matchCard(visiblePenaltyMatch)').includes('Pen. 0'));
 console.log('PASS: penalty score is visible only during the PEN phase.');
+assert.ok(run("eventLabel('injury')").includes('Lesión'));
+assert.ok(run("eventLabel('injury')").includes('<svg'));
+console.log('PASS: injury events use the medical plus icon.');

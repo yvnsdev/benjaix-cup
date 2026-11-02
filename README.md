@@ -1,5 +1,9 @@
 # Benjaix Cup
 
+## Eventos de lesión (017)
+
+Ejecutar `supabase/017_injury_events.sql` después de 016. Añade “Lesión (+)” al registro administrativo de eventos y la muestra con un signo médico `+` en el minuto a minuto, sin modificar el marcador.
+
 ## Entretiempo y tanda visual (016)
 
 Ejecutar `supabase/016_halftime_and_penalty_shootout.sql` después de 015. Añade Entretiempo (`ENT`) y una tanda pública de cinco penales por equipo. La tanda aparece únicamente cuando la fase es `PEN`; el administrador alterna cada balón entre pendiente, gol y fallo, y los goles verdes calculan automáticamente el marcador de penales.
