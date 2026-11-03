@@ -1,5 +1,21 @@
 # Benjaix Cup
 
+## Web del campeonato, noticias e inscripciones (018)
+
+La portada pública presenta el campeonato, últimas noticias, fase actual de copa, campeón más reciente, próximos partidos, premios y accesos a información, reglamento e inscripciones. El acceso «¿Eres capitán?» lleva al panel de gestión existente.
+
+**Activación necesaria:** ejecutar `supabase/018_championship_website.sql` después de 017 en el SQL Editor de Supabase. Publicar el frontend no ejecuta esta migración. Sin ella, los partidos continúan funcionando y las nuevas inscripciones permanecen cerradas; administración muestra el paso pendiente. No se inventan montos, premios, sede ni fechas.
+
+En Panel → Web del campeonato, configurar presentación, sede, fechas, premios, copa destacada, valor en CLP y datos de transferencia. Para abrir inscripciones se exige un monto positivo e instrucciones de pago. Los datos de transferencia se publican solo mientras las inscripciones están abiertas.
+
+En Panel → Noticias, crear, editar, destacar, publicar o retirar un comunicado desmarcando «Publicar en la web». Tipos: comunicado, reprogramación, suspensión e inscripciones. Se puede vincular un partido; el aviso no cambia automáticamente el horario ni el estado deportivo del encuentro.
+
+Flujo de capitanes: cuenta con correo confirmado → transferencia → solicitud con contacto y referencia → revisión manual del administrador → aprobación → creación del equipo. La base de datos fija el monto al enviar y no permite que el usuario modifique el importe, su aprobación o las observaciones. El administrador debe comprobar la transferencia en el banco; el sitio no procesa ni verifica pagos bancarios. Una solicitud rechazada puede reenviarse si las inscripciones siguen abiertas. Cerrar inscripciones no anula pagos ya aprobados ni solicitudes pendientes. Los capitanes con equipos existentes conservan su gestión.
+
+Solo cada solicitante y la administración pueden leer su solicitud. La aprobación está protegida por una función con verificación de rol y bloqueo de fila; `create_my_team` exige aprobación en el servidor. Las noticias en borrador no son públicas. Las solicitudes se actualizan al entrar al panel o a inscripciones y mediante «Actualizar solicitudes»; no se publican por Realtime.
+
+Validación local: `node tests/check.cjs` y `python tests/portal_browser.py`. La prueba del navegador usa datos de demostración y no envía transferencias ni modifica Supabase. La migración debe aplicarse y comprobarse con cuentas reales antes de abrir inscripciones de producción.
+
 ## Navegación y tareas de gestión
 
 La vista de partidos muestra primero los encuentros en vivo, luego los programados desde la fecha más próxima y finalmente los resultados más recientes. Permite buscar sin tildes por equipo, competencia o cancha, combinar competencia y fecha de Chile, limpiar filtros y recorrer páginas de nueve encuentros. Los filtros se conservan al cambiar de vista durante la sesión.

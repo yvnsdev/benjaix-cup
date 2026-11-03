@@ -17,7 +17,7 @@
     <meta name="apple-mobile-web-app-title" content="Benjaix Cup">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="enhancements.css"><link rel="stylesheet" href="statistics.css">
-<link rel="stylesheet" href="live.css"><link rel="stylesheet" href="management.css"><link rel="stylesheet" href="refinements.css"><link rel="stylesheet" href="upgrades.css"><link rel="stylesheet" href="interaction.css"></head>
+<link rel="stylesheet" href="live.css"><link rel="stylesheet" href="management.css"><link rel="stylesheet" href="refinements.css"><link rel="stylesheet" href="upgrades.css"><link rel="stylesheet" href="interaction.css"><link rel="stylesheet" href="portal.css"><link rel="stylesheet" href="polish.css"></head>
 
 <body class="app-loading">
     <a class="skip-link" href="#app">Saltar al contenido</a>
@@ -25,14 +25,24 @@
         <div class="season"><span class="tiny">COMPETICIÓN</span><strong>Temporada 2026 <span
                     class="green"><span data-icon="chevron"></span></span></strong><small>Fútbol 7 · Chile</small></div><span
             class="nav-label">EXPLORA LA COPA</span>
-        <nav id="main-navigation" aria-label="Navegación principal"><a href="#inicio" data-nav="inicio"><span data-icon="dashboard"></span> <span>Vista general</span></a><a href="#partidos"
-                data-nav="partidos"><span data-icon="live"></span> <span>Partidos</span><b id="live-count">1</b></a><a href="#copa" data-nav="copa"><span data-icon="trophy"></span><span>Cuadro de copa</span></a><a href="#equipos" data-nav="equipos"><span data-icon="teams"></span>
-                <span>Equipos</span></a><a href="#estadisticas" data-nav="estadisticas"><span data-icon="chart"></span>
-                <span>Estadísticas</span></a><a href="#experto" data-nav="experto"><span data-icon="star"></span><span>Experto Tanzy</span></a><a href="#reglamento" data-nav="reglamento"><span data-icon="document"></span> <span>Reglamento</span></a>
+        <nav id="main-navigation" aria-label="Navegación principal">
+            <a href="#inicio" data-nav="inicio">Inicio</a>
+            <a href="#campeonato" data-nav="campeonato">El campeonato</a>
+            <a href="#noticias" data-nav="noticias">Noticias</a>
+            <a href="#partidos" data-nav="partidos">Partidos <b id="live-count" aria-label="Partidos en vivo">0</b></a>
+            <a href="#copa" data-nav="copa">La copa</a>
+            <details class="public-nav-more"><summary>Explorar <span data-icon="chevron"></span></summary><div>
+                <a href="#equipos" data-nav="equipos">Equipos</a>
+                <a href="#estadisticas" data-nav="estadisticas">Estadísticas</a>
+                <a href="#experto" data-nav="experto">Experto Tanzy</a>
+                <a href="#reglamento" data-nav="reglamento">Reglamento</a>
+            </div></details>
+            <a href="#inscripciones" data-nav="inscripciones" class="nav-registration">Inscripciones <span data-icon="arrow"></span></a>
         </nav>
+        <div class="panel-navigation-wrap" hidden><span class="panel-menu-label">MI PANEL</span><nav id="panel-navigation" aria-label="Opciones del panel"></nav><a class="panel-site-return" href="#inicio"><span data-icon="arrow"></span> Volver al sitio</a></div>
         <div class="sidebar-bottom">
             <div class="mini-ball"><span data-icon="ball"></span></div><strong>Tu equipo. Tu historia.</strong>
-            <p>El próximo capítulo se juega en la cancha.</p><a href="#panel" class="button outline">Acceder al panel
+            <p>El próximo capítulo se juega en la cancha.</p><a href="#panel" class="button outline"><span class="panel-link-label">¿Eres capitán?</span>
                 <span data-icon="arrow"></span></a><small>BENJAIX CUP © 2026</small>
         </div>
     </aside>
@@ -40,19 +50,19 @@
         <header>
             <div><span class="green"><span data-icon="dot"></span></span> EL FÚTBOL NOS CONECTA</div>
             <div class="header-right"><span id="connection" class="connection">Cargando…</span><a href="#panel"
-                    class="button small"><span class="panel-link-label">Ingresar</span> <span><span data-icon="arrow"></span></span></a></div>
+                    class="button small"><span class="panel-link-label">¿Eres capitán?</span> <span><span data-icon="arrow"></span></span></a></div>
         </header>
         <main id="app" tabindex="-1"></main>
-        <footer><span>BENJAIX CUP <span class="muted">/ Pasión dentro y fuera de la cancha.</span></span><span>Hecho
-                para nuestra comunidad <span data-icon="arrow"></span></span></footer>
+        <footer class="site-footer"><div class="footer-brand"><strong>BENJAIX CUP<span>FÚTBOL 7 / CHILE</span></strong><p>Tu equipo. Tu comunidad.<br>La historia se juega en la cancha.</p></div><nav aria-label="Información del campeonato"><a href="#campeonato">El campeonato</a><a href="#reglamento">Reglamento</a><a href="#noticias">Noticias</a></nav><nav aria-label="Participa"><a href="#inscripciones">Inscripciones</a><a href="#panel">Acceso al panel</a><a href="#partidos">Ver partidos</a></nav><div class="footer-bottom"><span>Benjaix Cup © 2026</span><span>Hecho para nuestra comunidad.</span></div></footer>
     </div>
     <nav class="mobile-nav" aria-label="Accesos rápidos">
         <a href="#inicio" data-nav="inicio"><span data-icon="dashboard"></span><span>Inicio</span></a>
         <a href="#partidos" data-nav="partidos"><span data-icon="live"></span><span>Partidos</span></a>
-        <a href="#copa" data-nav="copa"><span data-icon="trophy"></span><span>Copas</span></a>
+        <a href="#noticias" data-nav="noticias"><span data-icon="mail"></span><span>Noticias</span></a>
         <a href="#panel" data-nav="panel"><span data-icon="user"></span><span>Mi panel</span></a>
         <button type="button" id="mobile-more" aria-expanded="false" aria-controls="main-navigation"><span data-icon="chevron"></span><span>Más</span></button>
     </nav>
+    <nav class="panel-mobile-nav" aria-label="Accesos del panel" hidden></nav>
     <dialog id="modal"><button class="close" aria-label="Cerrar"><span data-icon="close"></span></button>
         <div id="modal-content"></div>
     </dialog>
