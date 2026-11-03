@@ -203,3 +203,11 @@ assert.ok(run('filteredMatches()').includes('data-reset-matches'));
 run("matchDiscovery.day='';matchDiscovery.page=99;filteredMatches()");
 assert.equal(run('matchDiscovery.page'),0);
 console.log('PASS: live-first ordering, chronological schedules/results, accent-insensitive search, competition/date filters and pagination bounds.');
+
+run("data=structuredClone(initial);prepareDemo();demoProfile={id:'admin',role:'admin'}");
+assert.ok(!run('home()').includes('table-wrap'),'Home has no league standings');
+assert.ok(!run('panel()').includes('id="match-form"'),'Admin has no league scheduling form');
+assert.ok(!fs.readFileSync('dist/index.html','utf8').includes('href="#tabla"'),'Navigation has no standings link');
+assert.ok(run('rulesView()').includes('Copa Benjaix'),'Rules show cups');
+assert.ok(!run('rulesView()').includes('Liga Benjaix'),'Rules exclude league settings');
+console.log('PASS: cup-focused home, navigation, administration and rules.');
